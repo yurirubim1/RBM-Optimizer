@@ -6,8 +6,11 @@
 param([switch]$SkipTests, [switch]$SkipInstaller, [string]$Version = "0.2.0")
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$env:DOTNET_ROOT = "$env:LOCALAPPDATA\Microsoft\dotnet"
-$env:PATH = "$env:DOTNET_ROOT;$env:PATH"
+# SDK no perfil do usuário (máquina de desenvolvimento); no GitHub Actions usa o SDK do setup-dotnet.
+if (Test-Path "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe") {
+  $env:DOTNET_ROOT = "$env:LOCALAPPDATA\Microsoft\dotnet"
+  $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
+}
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 $artifacts = "$env:LOCALAPPDATA\RbmOptimizer.Build\release"
 $dist = Join-Path $root "dist"; $app = Join-Path $dist "app"

@@ -1,0 +1,55 @@
+name: Gerar o instalador do Windows
+
+# Compila, roda os testes e gera o RBM-Optimizer-Setup.msi no próprio GitHub.
+# Em todo push no main o .msi fica em Actions > (execução) > Artifacts.
+# Se você criar uma tag começando com "v" (ex.: v0.3.0), o .msi também é publicado na página Releases.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Versão
+        id: ver
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/v*') { $v = $env:GITHUB_REF_NAME.TrimStart('v') }
+          else { $v = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1 }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "Versão: $v"
+
+      - name: Testes, publicação e instalador
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File build/build.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RBM-Optimizer-Setup
+          path: dist/RBM-Optimizer-Setup.msi
+          if-no-files-found: error
+
+      - name: Publicar na Releases
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: RBM Optimizer ${{ steps.ver.outputs.version }}
+          files: dist/RBM-Optimizer-Setup.msi
+          body: |
+            Instalador do RBM Optimizer para Windows 10/11 (64 bits).
+
+            **Como instalar:** baixe o `RBM-Optimizer-Setup.msi` abaixo e abra. Se aparecer "O Windows protegeu o computador", clique em **Mais informações → Executar assim mesmo** (o instalador não tem assinatura digital paga).
+
+            Depois abra o app e use **Otimizar em 1 clique**: escolha Leve, Média ou Pesada, veja a lista do que muda e confirme. Tudo pode ser desfeito.
