@@ -1,0 +1,490 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "windows.visual.menushowdelay",
+      "name": { "pt": "Atraso de abertura de submenus", "en": "Menu show delay" },
+      "category": "Windows",
+      "subcategory": "Efeitos visuais",
+      "technicalDescription": "Valor MenuShowDelay (REG_SZ, ms) em HKCU\\Control Panel\\Desktop, equivalente a SPI_SETMENUSHOWDELAY. Padrão \"400\". Afeta submenus de menus clássicos (Win32), como menus de contexto em cascata.",
+      "plainExplanation": "Os submenus clássicos esperam 0,4 s antes de abrir. Reduzir deixa a interface com sensação mais ágil. Não muda FPS nem velocidade real do PC.",
+      "evidence": "Comportamento documentado da API SystemParametersInfo; o efeito é exatamente o atraso configurado e é perceptível. Benefício apenas de percepção/ergonomia.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Com 0 ms, submenus podem abrir acidentalmente ao passar o mouse.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "400 ms (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Desktop", "name": "MenuShowDelay", "kind": "String", "value": "400" } ]
+        },
+        {
+          "key": "fast",
+          "label": "100 ms",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Desktop", "name": "MenuShowDelay", "kind": "String", "value": "100" } ]
+        },
+        {
+          "key": "instant",
+          "label": "0 ms",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Desktop", "name": "MenuShowDelay", "kind": "String", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ui", "responsiveness", "preference"],
+      "benchmarkProcedure": "Não mensurável por FPS; validar visualmente com menu de contexto em cascata.",
+      "origin": "Tweak clássico do Windows XP (TweakUI)."
+    },
+    {
+      "id": "windows.visual.minanimate",
+      "name": { "pt": "Animação ao minimizar/maximizar janelas", "en": "Minimize/maximize window animation" },
+      "category": "Windows",
+      "subcategory": "Efeitos visuais",
+      "technicalDescription": "Valor MinAnimate (REG_SZ) em HKCU\\Control Panel\\Desktop\\WindowMetrics: \"1\" anima (padrão), \"0\" desativa. Corresponde a 'Animar janelas ao minimizar e maximizar' em Opções de desempenho.",
+      "plainExplanation": "Remove a animação de janelas ao minimizar/maximizar, fazendo a troca parecer instantânea. Não melhora desempenho real em hardware atual.",
+      "evidence": "Efeito visual documentado; em GPUs atuais o custo da animação é desprezível. Benefício de percepção (troca de janela imediata) e acessibilidade.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Apenas visual.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Animado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Desktop\\WindowMetrics", "name": "MinAnimate", "kind": "String", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "off",
+          "label": "Sem animação",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Desktop\\WindowMetrics", "name": "MinAnimate", "kind": "String", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ui", "animation", "preference", "low-end"],
+      "benchmarkProcedure": "Não mensurável por FPS; validar visualmente.",
+      "origin": "Opções de desempenho do sistema (sysdm.cpl)."
+    },
+    {
+      "id": "windows.visual.taskbaranimations",
+      "name": { "pt": "Animações da barra de tarefas", "en": "Taskbar animations" },
+      "category": "Windows",
+      "subcategory": "Efeitos visuais",
+      "technicalDescription": "Valor TaskbarAnimations (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced: 1 = animado (padrão; ausente equivale a 1), 0 = sem animações.",
+      "plainExplanation": "Desliga as animações dos ícones e miniaturas da barra de tarefas. Diferença apenas visual.",
+      "evidence": "Efeito visual documentado em Opções de desempenho; custo desprezível em hardware atual.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Apenas visual.",
+      "restart": "ExplorerRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Animada (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "TaskbarAnimations", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "off",
+          "label": "Sem animações",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "TaskbarAnimations", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ui", "animation", "preference", "low-end"],
+      "benchmarkProcedure": "Não mensurável por FPS; validar visualmente.",
+      "origin": "Opções de desempenho do sistema (sysdm.cpl)."
+    },
+    {
+      "id": "windows.visual.transparency",
+      "name": { "pt": "Efeitos de transparência", "en": "Transparency effects" },
+      "category": "Windows",
+      "subcategory": "Efeitos visuais",
+      "technicalDescription": "Valor EnableTransparency (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize: 1 = acrílico/mica com desfoque (padrão), 0 = superfícies opacas.",
+      "plainExplanation": "Desliga o efeito de vidro desfocado do Iniciar, barra de tarefas e janelas. Pode aliviar um pouco GPUs integradas fracas e economizar bateria; em PCs de jogos não muda FPS.",
+      "evidence": "O desfoque acrílico é composto pelo DWM na GPU; o próprio Windows o desativa no modo Economia de bateria, indicando custo energético. O impacto em FPS de jogos em tela cheia é desprezível; em iGPUs fracas o alívio é plausível, mas não há benchmarks rigorosos.",
+      "references": [],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Visual mais opaco.",
+      "restart": "ExplorerRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Transparência ligada (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "name": "EnableTransparency", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "off",
+          "label": "Transparência desligada",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "name": "EnableTransparency", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ui", "dwm", "igpu", "battery", "low-end"],
+      "benchmarkProcedure": "Em iGPU: uso de GPU do dwm.exe (Gerenciador de Tarefas/GPUView) com Iniciar aberto e janelas em movimento; consumo na bateria por 30 min.",
+      "origin": "Configurações > Personalização > Cores."
+    },
+    {
+      "id": "windows.backgroundapps.win10",
+      "name": { "pt": "Aplicativos em segundo plano (Windows 10, chave global)", "en": "Background apps global toggle (Windows 10)" },
+      "category": "Windows",
+      "subcategory": "Segundo plano",
+      "technicalDescription": "Valor GlobalUserDisabled (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications: 1 impede que apps UWP/Store do usuário executem tarefas em segundo plano. Corresponde ao interruptor global do Windows 10, removido no Windows 11.",
+      "plainExplanation": "Impede que apps da Microsoft Store rodem quando você não os está usando. Economiza um pouco de bateria e atividade em segundo plano, mas esses apps deixam de sincronizar e mandar notificações.",
+      "evidence": "Mecanismo documentado de controle de atividade em segundo plano de apps UWP. O ganho é proporcional ao número de apps Store que de fato rodam tarefas em segundo plano (normalmente poucos); não afeta programas Win32 tradicionais.",
+      "references": [
+        "https://learn.microsoft.com/nl-nl/windows/application-management/enterprise-background-activity-controls",
+        "https://www.tenforums.com/tutorials/7225-turn-off-background-apps-windows-10-a-post652643.html"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Apps Store (Email e Calendário, Clima, alguns mensageiros) deixam de sincronizar e notificar em segundo plano.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "maxBuild": 19045, "notes": "Somente Windows 10. No Windows 11 use a política 'windows.backgroundapps.policy'." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Permitido (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications", "name": "GlobalUserDisabled", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Bloqueado",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications", "name": "GlobalUserDisabled", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["background", "uwp", "battery"],
+      "benchmarkProcedure": "Contar processos de apps UWP ativos e uso de CPU ocioso por 15 min (Monitor de Recursos) com cada opção.",
+      "origin": "Configurações > Privacidade > Aplicativos em segundo plano (Windows 10)."
+    },
+    {
+      "id": "windows.backgroundapps.policy",
+      "name": { "pt": "Política: apps da Store em segundo plano", "en": "Policy: Let Windows apps run in the background" },
+      "category": "Windows",
+      "subcategory": "Segundo plano",
+      "technicalDescription": "Política LetAppsRunInBackground (DWORD) em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy: 0 = usuário decide, 1 = forçar permitir, 2 = forçar negar. Ausente = usuário decide.",
+      "plainExplanation": "Bloqueia para todos os usuários a execução em segundo plano de apps da Microsoft Store. Útil em PCs fracos; apps como mensageiros da Store deixam de notificar com o app fechado.",
+      "evidence": "Política documentada pela Microsoft (Policy CSP Privacy e guia de conexões). A própria Microsoft avisa que, com 'Forçar negar', a pesquisa/Cortana podem não funcionar como esperado. Benefício de desempenho pequeno e dependente da quantidade de apps Store instalados.",
+      "references": [
+        "https://learn.microsoft.com/windows/client-management/mdm/policy-csp-privacy",
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://learn.microsoft.com/nl-nl/windows/application-management/enterprise-background-activity-controls"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Notificações e sincronização de apps Store param com o app fechado; a página de configurações por app fica bloqueada; a pesquisa pode se comportar de forma inesperada.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 15063 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Usuário decide (política não configurada)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy", "name": "LetAppsRunInBackground", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "force-deny",
+          "label": "Forçar negar",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy", "name": "LetAppsRunInBackground", "kind": "DWord", "value": "2" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["background", "uwp", "policy", "low-end"],
+      "benchmarkProcedure": "RAM em uso e CPU ociosa 10 min após logon (média de 3 logons) com cada opção.",
+      "origin": "Política de grupo App Privacy (empresas)."
+    },
+    {
+      "id": "windows.notifications.toast",
+      "name": { "pt": "Notificações de aplicativos (toasts)", "en": "App toast notifications" },
+      "category": "Windows",
+      "subcategory": "Notificações",
+      "technicalDescription": "Valor ToastEnabled (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications: 1 = notificações habilitadas (padrão), 0 = desabilitadas para todos os apps.",
+      "plainExplanation": "Desliga as notificações pop-up de todos os aplicativos. Não aumenta FPS; serve para evitar distrações. O Windows 11 já ativa 'Não incomodar' automaticamente durante jogos em tela cheia.",
+      "evidence": "Comportamento do interruptor global de notificações. Nenhum ganho de desempenho mensurável; benefício é de foco/distração. Classificado B apenas pelo efeito declarado (silenciar notificações).",
+      "references": [],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Perde alertas de segurança de apps de terceiros, lembretes de calendário e mensagens.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Habilitadas (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications", "name": "ToastEnabled", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "off",
+          "label": "Desabilitadas",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications", "name": "ToastEnabled", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["notifications", "focus", "preference"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Configurações > Sistema > Notificações."
+    },
+    {
+      "id": "windows.widgets.policy",
+      "name": { "pt": "Widgets (Notícias e interesses)", "en": "Widgets board" },
+      "category": "Windows",
+      "subcategory": "Shell",
+      "technicalDescription": "Política AllowNewsAndInterests (DWORD) em HKLM\\SOFTWARE\\Policies\\Microsoft\\Dsh: 0 desativa o painel de Widgets e o botão da barra de tarefas. Preferida em relação ao valor TaskbarDa (HKCU\\...\\Explorer\\Advanced), que em builds recentes é protegido pelo driver UCPD e retorna 'acesso negado' a gravações externas.",
+      "plainExplanation": "Desliga o painel de Widgets do Windows 11, que mantém processos web (WebView2) em execução consumindo memória. Útil em PCs com pouca RAM.",
+      "evidence": "Política documentada para empresas. O painel usa processos WebView2 cujo consumo de memória é visível no Gerenciador de Tarefas (tipicamente dezenas a centenas de MB). Não há ganho de FPS mensurável em PCs com RAM suficiente. Mudanças recentes (UCPD) bloqueiam a edição direta de TaskbarDa, por isso este catálogo usa a política.",
+      "references": [
+        "https://woshub.com/disable-remove-taskbat-widgets-windows/",
+        "https://oofhours.com/2025/05/02/what-is-windows-11s-new-ucpd-feature/",
+        "https://learn.microsoft.com/en-ca/answers/questions/5638954/protected-registry-keys",
+        "https://www.elevenforum.com/t/add-or-remove-widgets-button-on-taskbar-in-windows-11.32/latest"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Sem Widgets (clima, notícias) e sem o atalho Win+W; a opção em Configurações fica bloqueada pela política.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 22000 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Widgets permitidos (política não configurada)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Dsh", "name": "AllowNewsAndInterests", "kind": "DWord", "value": null, "equivalents": ["1"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Widgets desativados",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Dsh", "name": "AllowNewsAndInterests", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["shell", "widgets", "webview2", "memory", "low-end"],
+      "benchmarkProcedure": "Somar memória de processos Widgets/WebView2 10 min após logon (média de 3 logons) com cada opção.",
+      "origin": "Política de grupo 'Permitir widgets' (Windows 11)."
+    },
+    {
+      "id": "windows.startup.delay",
+      "name": { "pt": "Atraso de programas de inicialização", "en": "Startup apps delay" },
+      "category": "Windows",
+      "subcategory": "Inicialização",
+      "technicalDescription": "Valor StartupDelayInMSec (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize. Sem o valor, o Explorer atrasa (~10 s) a execução de itens de inicialização das chaves Run/pasta Inicializar. 0 remove o atraso.",
+      "plainExplanation": "O Windows espera alguns segundos antes de abrir os programas que iniciam com ele, para a área de trabalho ficar utilizável antes. Remover o atraso faz esses programas abrirem antes, mas eles competem com o carregamento da área de trabalho.",
+      "evidence": "Mecanismo conhecido do Explorer, amplamente reproduzido em guias. Troca de prioridade e não ganho absoluto: programas de inicialização abrem mais cedo, a área de trabalho pode ficar responsiva mais tarde. Útil em SSD rápido com poucos itens de inicialização. Sem documentação oficial.",
+      "references": [],
+      "grade": "B",
+      "confidence": "Low",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Com muitos itens de inicialização, o logon pode parecer mais lento.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Atraso padrão (valor ausente)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize", "name": "StartupDelayInMSec", "kind": "DWord", "value": null } ]
+        },
+        {
+          "key": "none",
+          "label": "Sem atraso",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize", "name": "StartupDelayInMSec", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["startup", "logon", "explorer"],
+      "benchmarkProcedure": "Cronometrar do logon até a área de trabalho responder e até o último item de inicialização abrir (Log de eventos Diagnostics-Performance/BootRacer), 3 logons por opção.",
+      "origin": "Tweak popular desde o Windows 8 (Winaero, TenForums)."
+    },
+    {
+      "id": "windows.faststartup",
+      "name": { "pt": "Inicialização rápida (Fast Startup)", "en": "Fast Startup (hybrid boot)" },
+      "category": "Windows",
+      "subcategory": "Inicialização",
+      "technicalDescription": "Valor HiberbootEnabled (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power: 1 = ao 'Desligar', a sessão do kernel é hibernada (hiberfil.sys) e restaurada no próximo boot; 0 = desligamento completo. Reiniciar sempre faz boot completo.",
+      "plainExplanation": "Deixa o PC ligar mais rápido, mas o Windows não 'zera' de verdade ao desligar. Desativar dá um boot limpo toda vez (bom para drivers e atualizações, dual boot e problemas estranhos), ao custo de ligar alguns segundos mais devagar.",
+      "evidence": "Comportamento documentado. Redução do tempo de boot é mensurável (especialmente em HDD); em NVMe a diferença é de poucos segundos. Problemas conhecidos com dual boot (volume NTFS bloqueado), Wake-on-LAN e drivers que não reinicializam corretamente.",
+      "references": [
+        "https://www.elevenforum.com/t/turn-on-or-off-fast-startup-in-windows-11.1212/latest",
+        "https://thewindowsclub.com/fast-startup-windows-8"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Desativado: boot a frio mais lento. Ativado: tempo de atividade do kernel acumula entre desligamentos; partições NTFS ficam bloqueadas para outros sistemas.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "Requer hibernação habilitada (powercfg /h on) para ter efeito." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Habilitada (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", "name": "HiberbootEnabled", "kind": "DWord", "value": "1" } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desabilitada (boot completo sempre)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", "name": "HiberbootEnabled", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["boot", "stability", "dual-boot"],
+      "benchmarkProcedure": "Medir tempo de boot após 'Desligar' (evento 100 de Diagnostics-Performance), 3 ciclos por opção.",
+      "origin": "Recurso do Windows 8+; desativação recomendada por fabricantes em cenários de troubleshooting."
+    },
+    {
+      "id": "windows.explorer.showfileext",
+      "name": { "pt": "Mostrar extensões de arquivos", "en": "Show file name extensions" },
+      "category": "Windows",
+      "subcategory": "Explorador de Arquivos",
+      "technicalDescription": "Valor HideFileExt (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced: 1 = ocultar extensões conhecidas (padrão), 0 = mostrar.",
+      "plainExplanation": "Mostra a extensão real dos arquivos (ex.: 'fatura.pdf.exe'), ajudando a identificar arquivos maliciosos disfarçados. Não afeta desempenho.",
+      "evidence": "MITRE ATT&CK (T1036.007) documenta o abuso de extensões duplas e recomenda desabilitar a ocultação de extensões conhecidas. Sem efeito de desempenho.",
+      "references": [
+        "https://attack.mitre.org/techniques/T1036/007/",
+        "https://cybsafe.com/research/security-behaviour-database/behaviours/enabling-show-file-extensions"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Renomear arquivos pode alterar a extensão por engano (o Windows avisa).",
+      "restart": "ExplorerRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Ocultar extensões (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "HideFileExt", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "show",
+          "label": "Mostrar extensões",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "HideFileExt", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "show",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["explorer", "security-hygiene", "usability"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Opções de pasta do Explorador."
+    },
+    {
+      "id": "windows.explorer.launchto",
+      "name": { "pt": "Explorador abre em 'Este Computador'", "en": "Open File Explorer to This PC" },
+      "category": "Windows",
+      "subcategory": "Explorador de Arquivos",
+      "technicalDescription": "Valor LaunchTo (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced: 1 = Este Computador; ausente/2 = Início/Acesso rápido (padrão); 3 = Downloads (builds recentes).",
+      "plainExplanation": "Faz o Explorador abrir mostrando as unidades em vez da página Início com arquivos recentes e recomendados da nuvem. Pode abrir um pouco mais rápido quando a página Início demora a carregar itens do OneDrive/Microsoft 365.",
+      "evidence": "Preferência de usabilidade documentada nas Opções de pasta. Relatos de abertura mais lenta da página Início com contas Microsoft 365/OneDrive são anedóticos; sem benchmarks.",
+      "references": [],
+      "grade": "B",
+      "confidence": "Low",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Arquivos recentes deixam de aparecer ao abrir o Explorador (continuam acessíveis em Início).",
+      "restart": "ExplorerRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Início / Acesso rápido (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "LaunchTo", "kind": "DWord", "value": null, "equivalents": ["2"] } ]
+        },
+        {
+          "key": "this-pc",
+          "label": "Este Computador",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "LaunchTo", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["explorer", "usability", "preference"],
+      "benchmarkProcedure": "Cronometrar abertura do Explorador (Win+E) até conteúdo completo, 5 vezes por opção.",
+      "origin": "Opções de pasta do Explorador."
+    }
+  ]
+}

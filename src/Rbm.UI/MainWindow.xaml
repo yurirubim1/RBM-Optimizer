@@ -1,0 +1,186 @@
+<Window x:Class="Rbm.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Rbm.UI"
+        xmlns:inf="clr-namespace:Rbm.UI.Infrastructure"
+        Title="RBM Optimizer" Width="1440" Height="900" MinWidth="1100" MinHeight="680"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource B.Bg}"
+        FontFamily="{StaticResource F.Ui}" Foreground="{StaticResource B.Text}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="28" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="236" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ===== Barra de título ===== -->
+        <Border Grid.ColumnSpan="2" Background="{StaticResource B.Sidebar}" BorderBrush="{StaticResource B.Border}" BorderThickness="0,0,0,1">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
+                    <Border Width="22" Height="22" CornerRadius="6" Background="{StaticResource B.AccentGradient}">
+                        <TextBlock Text="R" Foreground="White" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource F.Display}" />
+                    </Border>
+                    <TextBlock Text="RBM" Style="{StaticResource T.H3}" Margin="10,0,0,0" FontFamily="{StaticResource F.Display}" FontSize="13.5" />
+                    <TextBlock Text="Optimizer" Style="{StaticResource T.Muted}" Margin="5,0,0,0" FontSize="13.5" />
+                    <TextBlock Text="{Binding MachineLine}" Style="{StaticResource T.Caption}" Margin="24,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource Btn.Icon}" Content="&#xE921;" Width="46" Height="40" Click="Min_Click" ToolTip="Minimizar" />
+                    <Button Style="{StaticResource Btn.Icon}" Content="&#xE922;" Width="46" Height="40" Click="Max_Click" ToolTip="Maximizar" />
+                    <Button x:Name="CloseBtn" Style="{StaticResource Btn.Icon}" Content="&#xE8BB;" Width="46" Height="40" Click="Close_Click" ToolTip="Fechar" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== Sidebar ===== -->
+        <Border Grid.Row="1" Background="{StaticResource B.Sidebar}" BorderBrush="{StaticResource B.Border}" BorderThickness="0,0,1,0">
+          <DockPanel>
+            <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource B.Border}" BorderThickness="0,1,0,0" Padding="18,12">
+                <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding SimpleMode, Converter={StaticResource Not}}"
+                              ToolTip="Mostra todas as ferramentas avançadas (processos, drivers, rede, latência, testes…)">
+                    <TextBlock Text="Todas as ferramentas" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" />
+                </ToggleButton>
+            </Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,8">
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type ui:NavGroup}">
+                            <StackPanel Margin="0,4,0,8">
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource T.Overline}" Margin="22,8,0,6" />
+                                <ItemsControl ItemsSource="{Binding Items}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type inf:NavItem}">
+                                            <RadioButton Style="{StaticResource NavItem}" Click="Nav_Click" Tag="{Binding Key}" Loaded="NavItem_Loaded" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
+        </Border>
+
+        <!-- ===== Conteúdo ===== -->
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Margin="28,18,28,12">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock Text="{Binding CurrentPage.Title}" Style="{StaticResource T.H1}" />
+                        <TextBlock Text="{Binding CurrentPage.Subtitle}" Style="{StaticResource T.Muted}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Visibility="{Binding CurrentPage.IsBusy, Converter={StaticResource Vis}}">
+                        <ProgressBar IsIndeterminate="True" Width="120" Margin="0,0,10,0" />
+                        <TextBlock Text="{Binding CurrentPage.BusyText}" Style="{StaticResource T.Muted}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+            <ContentControl Grid.Row="1" Content="{Binding CurrentPage}" Focusable="False" />
+
+            <!-- Inicialização -->
+            <Grid Grid.RowSpan="2" Background="{StaticResource B.Bg}" Visibility="{Binding IsInitializing, Converter={StaticResource Vis}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Border Width="56" Height="56" CornerRadius="14" Background="{StaticResource B.AccentGradient}" HorizontalAlignment="Center">
+                        <TextBlock Text="R" Foreground="White" FontWeight="Bold" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource F.Display}" />
+                    </Border>
+                    <TextBlock Text="{Binding InitText}" Style="{StaticResource T.Muted}" HorizontalAlignment="Center" Margin="0,18,0,10" />
+                    <ProgressBar IsIndeterminate="True" Width="220" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- ===== Barra de status ===== -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{StaticResource B.Sidebar}" BorderBrush="{StaticResource B.Border}" BorderThickness="0,1,0,0">
+            <DockPanel Margin="12,0" LastChildFill="False">
+                <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Ghost}" Padding="6,2" Command="{Binding ToggleMonitoringCommand}" ToolTip="Pausar/retomar a amostragem de telemetria">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="7" Height="7" Fill="{Binding MonitoringActive, Converter={StaticResource LevelBrush}}" Margin="0,0,7,0" />
+                        <TextBlock x:Name="MonText" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" />
+                    </StackPanel>
+                </Button>
+                <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Ghost}" Padding="6,2" Margin="8,0,0,0" Command="{Binding ConnectAgentCommand}"
+                        ToolTip="O RBM roda sem privilégios. Operações administrativas usam um agente separado, iniciado sob demanda via UAC.">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE72E;" Style="{StaticResource T.Icon}" FontSize="11" Foreground="{StaticResource B.TextMuted}" Margin="0,0,6,0" />
+                        <TextBlock x:Name="AgentText" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" />
+                    </StackPanel>
+                </Button>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="40" Height="3" Margin="0,0,8,0" Visibility="{Binding Tasks.Any, Converter={StaticResource Vis}}" />
+                    <TextBlock Text="{Binding Tasks.Summary}" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Version, StringFormat=v{0}}" FontSize="11.5" Foreground="{StaticResource B.TextFaint}" VerticalAlignment="Center" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding QuickStats}" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" VerticalAlignment="Center" Margin="0,0,18,0" />
+                <Border DockPanel.Dock="Right" Style="{StaticResource Pill}" Background="{StaticResource B.WarningSoft}" Margin="0,0,14,0"
+                        Visibility="{Binding PendingRestart, Converter={StaticResource Vis}}">
+                    <TextBlock FontSize="11" Foreground="{StaticResource B.Warning}" Text="{Binding PendingRestart, StringFormat={}{0} alteração(ões) aguardando reinicialização}" />
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== Toasts ===== -->
+        <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Notifier.Items}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,16" Width="360">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type inf:Toast}">
+                    <Border Background="{StaticResource B.Surface3}" BorderBrush="{StaticResource B.BorderStrong}" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,8,0,0">
+                        <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.45" /></Border.Effect>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ic" Text="{Binding Icon}" Style="{StaticResource T.Icon}" VerticalAlignment="Top" Margin="0,1,12,0" Foreground="{StaticResource B.Info}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource T.H3}" />
+                                <TextBlock Text="{Binding Message}" Style="{StaticResource T.WrapMuted}" Margin="0,3,0,0" FontSize="12" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Style="{StaticResource Btn.Icon}" Content="&#xE711;" FontSize="10" Padding="4" VerticalAlignment="Top" Command="{Binding CloseCommand}" />
+                        </Grid>
+                    </Border>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Kind}" Value="success"><Setter TargetName="ic" Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="warning"><Setter TargetName="ic" Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="error"><Setter TargetName="ic" Property="Foreground" Value="{StaticResource B.Danger}" /></DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- ===== Diálogo modal ===== -->
+        <Grid Grid.RowSpan="3" Grid.ColumnSpan="2" Background="{StaticResource B.Overlay}" Visibility="{Binding Dialog.IsOpen, Converter={StaticResource Vis}}">
+            <Border Width="560" Background="{StaticResource B.Surface2}" BorderBrush="{StaticResource B.BorderStrong}" BorderThickness="1" CornerRadius="12" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="8" Opacity="0.6" /></Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="{Binding Dialog.Title}" Style="{StaticResource T.H2}" FontSize="18" />
+                    <TextBlock Text="{Binding Dialog.Message}" Style="{StaticResource T.Wrap}" Margin="0,12,0,0" />
+                    <Border Style="{StaticResource CardInner}" Margin="0,14,0,0" MaxHeight="300" Visibility="{Binding Dialog.Details, Converter={StaticResource Vis}}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding Dialog.Details}" Style="{StaticResource T.WrapMuted}" FontSize="12" FontFamily="{StaticResource F.Ui}" />
+                        </ScrollViewer>
+                    </Border>
+                    <StackPanel Margin="0,14,0,0" Visibility="{Binding Dialog.RequiredPhrase, Converter={StaticResource Vis}}">
+                        <TextBlock Style="{StaticResource T.Muted}" Text="{Binding Dialog.RequiredPhrase, StringFormat='Para confirmar, digite: {0}'}" />
+                        <TextBox Text="{Binding Dialog.TypedPhrase, UpdateSourceTrigger=PropertyChanged}" Margin="0,6,0,0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+                        <Button Content="Cancelar" Command="{Binding Dialog.CancelCommand}" Margin="0,0,10,0" Visibility="{Binding Dialog.ShowCancel, Converter={StaticResource Vis}}" />
+                        <Button x:Name="ConfirmBtn" Content="{Binding Dialog.ConfirmText}" Command="{Binding Dialog.ConfirmCommand}" IsEnabled="{Binding Dialog.CanConfirm}" Style="{StaticResource Btn.Primary}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

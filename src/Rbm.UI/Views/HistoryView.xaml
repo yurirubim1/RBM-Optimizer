@@ -1,0 +1,136 @@
+<UserControl x:Class="Rbm.UI.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels"
+             xmlns:tw="clr-namespace:Rbm.Core.Tweaks;assembly=Rbm.Core">
+    <UserControl.Resources>
+        <Style x:Key="TabPanel" TargetType="FrameworkElement">
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="28,0,28,20">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,12">
+            <Border DockPanel.Dock="Left" Background="{StaticResource B.Surface}" CornerRadius="8" Padding="3" BorderBrush="{StaticResource B.Border}" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="TabChanges" Style="{StaticResource Segment}" Content="Alterações" GroupName="htab" Command="{Binding SetTabCommand}" CommandParameter="changes" IsChecked="True" />
+                    <RadioButton x:Name="TabDrift" Style="{StaticResource Segment}" Content="Mudanças externas" GroupName="htab" Command="{Binding SetTabCommand}" CommandParameter="drift" />
+                    <RadioButton x:Name="TabRestore" Style="{StaticResource Segment}" Content="Pontos de restauração" GroupName="htab" Command="{Binding SetTabCommand}" CommandParameter="restore" />
+                    <RadioButton x:Name="TabImport" Style="{StaticResource Segment}" Content="Backup" GroupName="htab" Command="{Binding SetTabCommand}" CommandParameter="import" />
+                    <RadioButton x:Name="TabAudit" Style="{StaticResource Segment}" Content="Registro de atividades" GroupName="htab" Command="{Binding SetTabCommand}" CommandParameter="audit" />
+                </StackPanel>
+            </Border>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Checar mudanças externas" Padding="10,6" ToolTip="Verifica se algum valor alterado pelo RBM foi mudado depois por outro programa" Command="{Binding DetectDriftCommand}" Margin="0,0,8,0" />
+                <Button Content="Criar ponto de restauração" Padding="10,6" Command="{Binding CreateRestorePointCommand}" Margin="0,0,8,0" />
+                <Button Content="Exportar" Padding="10,6" ToolTip="Exportar backup do histórico" Command="{Binding ExportCommand}" Margin="0,0,8,0" />
+                <Button Content="Importar" Padding="10,6" ToolTip="Importar backup validado" Command="{Binding ImportCommand}" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Alterações -->
+        <Grid Grid.Row="1" x:Name="PanelChanges">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="1.6*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Card}" Padding="8">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" Style="{StaticResource T.Caption}" Margin="8,4,0,8" />
+                    <Grid>
+                    <DataGrid ItemsSource="{Binding Changes}" SelectedItem="{Binding Selected}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Data" Binding="{Binding When}" Width="120" />
+                            <DataGridTextColumn Header="O que mudou" Binding="{Binding TweakName}" Width="2*" />
+                            <DataGridTextColumn Header="De → Para" Binding="{Binding FromTo}" Width="1.6*" />
+                            <DataGridTextColumn Header="Situação" Binding="{Binding StatusText}" Width="1.2*" />
+                            <DataGridTextColumn Header="Origem" Binding="{Binding Origin}" Width="*" />
+                            
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel VerticalAlignment="Center" Visibility="{Binding IsEmpty, Converter={StaticResource Vis}}">
+                        <TextBlock Text="&#xE81C;" Style="{StaticResource EmptyIcon}" />
+                        <TextBlock Text="Nenhuma alteração feita pelo RBM ainda." Style="{StaticResource T.H3}" HorizontalAlignment="Center" />
+                        <TextBlock Text="Tudo o que você aplicar em Otimizações ou Perfis aparece aqui, com o valor de antes, e pode ser desfeito a qualquer momento." Style="{StaticResource T.Lead}" TextAlignment="Center" MaxWidth="460" Margin="0,4,0,0" />
+                    </StackPanel>
+                    </Grid>
+                </DockPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel DataContext="{Binding Selected}">
+                    <TextBlock Text="Detalhes" Style="{StaticResource T.H2}" />
+                    <TextBlock Text="Selecione uma alteração na lista para ver detalhes e desfazê-la." Style="{StaticResource T.WrapMuted}" Margin="0,8,0,0" Visibility="{Binding Converter={StaticResource VisInv}}" />
+                    <StackPanel Visibility="{Binding Converter={StaticResource Vis}}">
+                        <TextBlock Text="{Binding TweakName}" Style="{StaticResource T.H3}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource T.Caption}" Margin="0,2,0,0" />
+                        <TextBlock Text="{Binding Restart, StringFormat=Reinício necessário: {0}}" Style="{StaticResource T.Caption}" />
+                        <TextBlock Text="{Binding FromTo}" Style="{StaticResource T.Base}" Foreground="{StaticResource B.Cyan}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <Expander Style="{StaticResource TechDetails}"><TextBlock Text="{Binding Details}" Style="{StaticResource T.WrapMuted}" FontFamily="{StaticResource F.Mono}" FontSize="11.5" /></Expander>
+                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                            <Button Content="Desfazer" Style="{StaticResource Btn.Primary}" Visibility="{Binding CanRevert, Converter={StaticResource Vis}}"
+                                    Command="{Binding DataContext.RevertCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                            <Button Content="Desfazer o lote todo" Margin="8,0,0,0" Visibility="{Binding Record.BatchId, Converter={StaticResource Vis}}"
+                                    Command="{Binding DataContext.RevertBatchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Divergências -->
+        <Border Grid.Row="1" x:Name="PanelDrift" Style="{StaticResource Card}" VerticalAlignment="Top" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Alterações externas" Style="{StaticResource T.H2}" />
+                <TextBlock Text="Compara o valor gravado pelo RBM com o valor atual de cada alteração ativa. O RBM nunca sobrescreve alterações externas sem avisar." Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,10" />
+                <ItemsControl ItemsSource="{Binding Drift}">
+                    <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat=• {0}}" Style="{StaticResource T.Wrap}" Margin="0,3" /></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Pontos de restauração -->
+        <Border Grid.Row="1" x:Name="PanelRestore" Style="{StaticResource Card}" VerticalAlignment="Top" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Pontos de restauração do sistema" Style="{StaticResource T.H2}" />
+                <TextBlock Text="Antes de ajustes de risco médio ou maior, o RBM tenta criar um ponto automaticamente (configurável). Pontos de restauração não substituem backups completos." Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,10" />
+                <ItemsControl ItemsSource="{Binding RestorePoints}">
+                    <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat=• {0}}" Style="{StaticResource T.Wrap}" Margin="0,3" /></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Backup importado -->
+        <Border Grid.Row="1" x:Name="PanelImport" Style="{StaticResource Card}" VerticalAlignment="Top" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Backup importado" Style="{StaticResource T.H2}" />
+                <TextBlock Text="{Binding ImportInfo}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,10" />
+                <ItemsControl ItemsSource="{Binding Imported}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type tw:TweakChangeRecord}">
+                            <Border Style="{StaticResource CardInner}" Margin="0,0,0,8">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="Restaurar estado anterior" VerticalAlignment="Center"
+                                            Command="{Binding DataContext.RestoreImportedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding TweakId}" Style="{StaticResource T.H3}" />
+                                        <TextBlock Style="{StaticResource T.Caption}"><Run Text="{Binding At, Mode=OneWay, StringFormat=g}" /><Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" /></TextBlock>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Auditoria -->
+        <Border Grid.Row="1" x:Name="PanelAudit" Style="{StaticResource Card}" Padding="8" Visibility="Collapsed">
+            <DataGrid ItemsSource="{Binding Audit}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Data" Binding="{Binding At, StringFormat=g}" Width="130" />
+                    <DataGridTextColumn Header="Usuário" Binding="{Binding User}" Width="100" />
+                    <DataGridTextColumn Header="Ação" Binding="{Binding Action}" Width="170" />
+                    <DataGridTextColumn Header="Detalhe" Binding="{Binding Detail}" Width="*" />
+                    <DataGridCheckBoxColumn Header="OK" Binding="{Binding Success}" Width="50" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,373 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "gaming.gamemode",
+      "name": { "pt": "Modo de Jogo", "en": "Game Mode" },
+      "category": "Gaming",
+      "subcategory": "Recursos do Windows",
+      "technicalDescription": "Valor AutoGameModeEnabled (DWORD) em HKCU\\Software\\Microsoft\\GameBar: 1 = Modo de Jogo ligado (padrão; ausente equivale a 1), 0 = desligado. Com o Modo de Jogo, o Windows prioriza o jogo em primeiro plano, evita instalações de drivers pelo Windows Update e notificações de reinício durante a sessão.",
+      "plainExplanation": "Recurso nativo que dá prioridade ao jogo aberto e segura atualizações e avisos enquanto você joga. Vem ligado de fábrica; mantenha ligado salvo se um jogo específico piorar.",
+      "evidence": "Testes de imprensa mostram ganhos pequenos (≈2–3% de média em alguns títulos, com 1% low às vezes melhores) e casos isolados de perda em jogos muito dependentes de CPU. O benefício mais consistente é evitar interrupções (Windows Update/notificações). Dependente do sistema.",
+      "references": [
+        "https://iqondigital.com/learn/pc-optimization/game-mode",
+        "https://windowsnews.ai/article/windows-11-game-mode-can-hurt-performance-in-cpu-heavy-games-tests-show-try-this-alternative.441277",
+        "https://www.noticias3d.com/noticia/85396/windows-11-game-mode-activado-desactivado-hay-diferencia.html"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Em poucos jogos muito dependentes de CPU houve leve perda; tarefas em segundo plano (streaming/encode na CPU) podem receber menos prioridade.",
+      "restart": "AppRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 15063 },
+      "options": [
+        {
+          "key": "on",
+          "label": "Ligado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "off",
+          "label": "Desligado",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "on",
+      "recommendedOption": "on",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gaming", "game-mode", "restore-default"],
+      "benchmarkProcedure": "CapFrameX em 3 jogos (1 dependente de CPU) com uma tarefa de fundo realista (navegador + Discord), 3 execuções por estado: média, 1% e 0,1% low.",
+      "origin": "Recurso nativo do Windows 10 1703+."
+    },
+    {
+      "id": "gaming.gamedvr.capture",
+      "name": { "pt": "Capturas do Xbox Game Bar (Game DVR)", "en": "Xbox Game Bar captures (Game DVR)" },
+      "category": "Gaming",
+      "subcategory": "Captura",
+      "technicalDescription": "Valores AppCaptureEnabled (HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR) e GameDVR_Enabled (HKCU\\System\\GameConfigStore): 1 = capturas habilitadas (padrão), 0 = recurso de captura desabilitado para o usuário.",
+      "plainExplanation": "Desliga a gravação/captura de tela do Xbox Game Bar. Se você grava com o software da placa de vídeo, OBS ou não grava nada, desligar remove ganchos de captura desnecessários.",
+      "evidence": "Com a gravação em segundo plano desligada (padrão), o custo do recurso de captura ocioso é pequeno; relatos de ganho são majoritariamente anedóticos. O efeito relevante e documentado vem da gravação em segundo plano (ver gaming.gamedvr.backgroundrecording). Dependente do sistema.",
+      "references": [
+        "https://hackingpc.pages.dev/pc-optimization/game-dvr-disable-windows-11-guide",
+        "https://iqondigital.com/learn/pc-optimization/game-bar-dvr"
+      ],
+      "grade": "B",
+      "confidence": "Low",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Win+Alt+R e capturas do Game Bar deixam de funcionar.",
+      "restart": "AppRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Capturas habilitadas (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "name": "AppCaptureEnabled", "kind": "DWord", "value": "1", "equivalents": [null] },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_Enabled", "kind": "DWord", "value": "1", "equivalents": [null] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Capturas desabilitadas",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "name": "AppCaptureEnabled", "kind": "DWord", "value": "0" },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_Enabled", "kind": "DWord", "value": "0" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gaming", "game-bar", "capture"],
+      "benchmarkProcedure": "CapFrameX em 2 jogos, 3 execuções por estado, com a gravação em segundo plano desligada em ambos.",
+      "origin": "Guias de otimização para jogos (winutil, guias do YouTube)."
+    },
+    {
+      "id": "gaming.gamedvr.backgroundrecording",
+      "name": { "pt": "Gravação em segundo plano ('Gravar o que aconteceu')", "en": "Background recording (Record what happened)" },
+      "category": "Gaming",
+      "subcategory": "Captura",
+      "technicalDescription": "Valor HistoricalCaptureEnabled (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR: 0 = desligado (padrão), 1 = grava continuamente os últimos minutos do jogo usando o codificador de vídeo.",
+      "plainExplanation": "Quando ligado, o Windows grava o jogo o tempo todo para você poder salvar os últimos minutos. Isso consome GPU/codificador, memória e disco. O padrão é desligado; este item serve para garantir que continue assim.",
+      "evidence": "A gravação contínua usa o codificador de vídeo e escrita em disco durante todo o jogo; guias e o próprio texto de configuração alertam para impacto no desempenho. A magnitude varia com o hardware (codificadores dedicados modernos reduzem o custo); números publicados são pouco rigorosos.",
+      "references": [
+        "https://elevenforum.com/t/enable-or-disable-record-what-happened-for-gaming-captures-in-windows-11.17900/",
+        "https://geekrewind.com/how-to-manage-background-recording-length-settings-in-windows-11-game-bar/"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Sem a gravação, não é possível salvar 'o que aconteceu' depois do fato.",
+      "restart": "AppRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "off",
+          "label": "Desligada (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "name": "HistoricalCaptureEnabled", "kind": "DWord", "value": "0", "equivalents": [null] } ]
+        },
+        {
+          "key": "on",
+          "label": "Ligada",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "name": "HistoricalCaptureEnabled", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "off",
+      "recommendedOption": "off",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gaming", "game-bar", "capture", "restore-default"],
+      "benchmarkProcedure": "CapFrameX em 2 jogos com GPU a 95%+, 3 execuções por estado; registrar uso do codificador (Gerenciador de Tarefas > GPU > Video Encode).",
+      "origin": "Configurações > Jogos > Capturas."
+    },
+    {
+      "id": "gaming.gamedvr.policy",
+      "name": { "pt": "Política: desativar Game DVR para todos", "en": "Policy: disable Windows Game Recording and Broadcasting" },
+      "category": "Gaming",
+      "subcategory": "Captura",
+      "technicalDescription": "Política AllowGameDVR (DWORD) em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR: 0 desabilita gravação e transmissão de jogos para todos os usuários. Ausente = não configurada.",
+      "plainExplanation": "Versão 'para o computador inteiro' de desligar as capturas do Game Bar. Útil em PCs compartilhados ou quando o ajuste por usuário é revertido por atualizações.",
+      "evidence": "Política administrativa documentada (Componentes do Windows > Gravação e Transmissão de Jogos do Windows). Mesmo nível de evidência de desempenho do item por usuário: pequeno quando a gravação em segundo plano já está desligada.",
+      "references": [
+        "https://hackingpc.pages.dev/pc-optimization/game-dvr-disable-windows-11-guide"
+      ],
+      "grade": "B",
+      "confidence": "Low",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Bloqueia capturas do Game Bar para todos os usuários; a opção em Configurações fica indisponível.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurada (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR", "name": "AllowGameDVR", "kind": "DWord", "value": null, "equivalents": ["1"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Game DVR desabilitado",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR", "name": "AllowGameDVR", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gaming", "game-bar", "policy"],
+      "benchmarkProcedure": "Idem gaming.gamedvr.capture.",
+      "origin": "Política de grupo para empresas/escolas."
+    },
+    {
+      "id": "gaming.fso.global",
+      "name": { "pt": "Otimizações de tela cheia (FSO) — desativar globalmente", "en": "Fullscreen optimizations — global disable" },
+      "category": "Gaming",
+      "subcategory": "Apresentação",
+      "technicalDescription": "Valores em HKCU\\System\\GameConfigStore: GameDVR_FSEBehaviorMode=2, GameDVR_HonorUserFSEBehaviorMode=1, GameDVR_DXGIHonorFSEWindowsCompatible=1, GameDVR_FSEBehavior=2. Valores não documentados oficialmente; a comunidade os usa para forçar tela cheia exclusiva 'real' em vez do modo híbrido (FSO) em todos os jogos.",
+      "plainExplanation": "Tenta forçar todos os jogos a usarem a tela cheia exclusiva antiga em vez do modo moderno do Windows. Em jogos modernos o modo do Windows já tem latência equivalente e permite alt-tab rápido; os resultados deste ajuste são inconsistentes.",
+      "evidence": "Sem documentação oficial; a interpretação dos valores diverge (uma resposta no Microsoft Q&A os descreve como limites de recursos do Game DVR). Usuários relatam efeito inconsistente (FSO continua ativo em alguns jogos). Com flip model/Independent Flip, a apresentação em tela cheia sem bordas já atinge latência equivalente à exclusiva. Evidência insuficiente.",
+      "references": [
+        "https://winutil.christitus.com/dev/tweaks/z--advanced-tweaks---caution/disablefso",
+        "https://learn.microsoft.com/en-us/answers/a/7368116",
+        "https://forums.blurbusters.com/viewtopic.php?p=64396",
+        "https://www.powershellgallery.com/packages/gamedvr-fso-disabler/1.0.2/Content/gamedvr-fso-disabler.ps1"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Alt-tab mais lento, overlays (Game Bar, notificações) podem não aparecer; o winutil alerta que desativa o gerenciamento de cor em tela cheia exclusiva. Auto HDR e alguns recursos de VRR em janela dependem do caminho moderno.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 17134 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão do Windows (FSO habilitado)",
+          "notes": "O valor de GameDVR_FSEBehaviorMode varia entre builds/perfis (0 ou 2); ambos são aceitos como padrão quando os demais valores estão no padrão.",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_FSEBehaviorMode", "kind": "DWord", "value": "0", "equivalents": ["2", null] },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_HonorUserFSEBehaviorMode", "kind": "DWord", "value": "0", "equivalents": [null] },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_DXGIHonorFSEWindowsCompatible", "kind": "DWord", "value": "0", "equivalents": [null] },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_FSEBehavior", "kind": "DWord", "value": null, "equivalents": ["0"] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "FSO desativado globalmente",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_FSEBehaviorMode", "kind": "DWord", "value": "2" },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_HonorUserFSEBehaviorMode", "kind": "DWord", "value": "1" },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_DXGIHonorFSEWindowsCompatible", "kind": "DWord", "value": "1" },
+            { "type": "registry", "hive": "HKCU", "path": "System\\GameConfigStore", "name": "GameDVR_FSEBehavior", "kind": "DWord", "value": "2" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gaming", "fullscreen", "fso", "presentation"],
+      "benchmarkProcedure": "PresentMon/CapFrameX verificando PresentMode e latência PC (FrameView/Reflex) em 2 jogos DX11 e 1 DX12 em tela cheia, 3 execuções por estado.",
+      "origin": "Fóruns (Guru3D, Blur Busters), winutil e scripts de 'FSO disabler'."
+    },
+    {
+      "id": "gaming.mmcss.systemresponsiveness",
+      "name": { "pt": "MMCSS: SystemResponsiveness", "en": "MMCSS SystemResponsiveness" },
+      "category": "Gaming",
+      "subcategory": "MMCSS",
+      "technicalDescription": "Valor SystemResponsiveness (DWORD) em HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile: % de CPU garantido a tarefas de baixa prioridade quando threads registradas no MMCSS estão ativas. Padrão 20. Segundo a documentação atual, valores não múltiplos de 10 são arredondados para baixo, valores abaixo de 10 e acima de 100 são ajustados para 20, e 100 desabilita o MMCSS.",
+      "plainExplanation": "Ajuste famoso em guias de jogos ('coloque 0'). A documentação da Microsoft diz que 0 é tratado como 20, ou seja, o padrão. E só afeta programas que se registram no agendador multimídia (principalmente áudio), não o jogo em geral.",
+      "evidence": "A documentação oficial do MMCSS invalida o valor popular 0 (ajustado para 20). O efeito real se limita a threads registradas no MMCSS (Áudio, Pro Audio, Captura...); não há benchmarks mostrando ganho de FPS. Placebo para jogos.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service",
+        "https://learn.microsoft.com/en-us/windows/win32/api/avrt/nf-avrt-avquerysystemresponsiveness"
+      ],
+      "grade": "D",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "10 reserva menos CPU para tarefas de fundo enquanto áudio/streams MMCSS estão ativos; 100 desabilita o MMCSS (pode causar falhas de áudio).",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "20 (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "name": "SystemResponsiveness", "kind": "DWord", "value": "20" } ]
+        },
+        {
+          "key": "ten",
+          "label": "10 (mínimo efetivo)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "name": "SystemResponsiveness", "kind": "DWord", "value": "10" } ]
+        },
+        {
+          "key": "zero",
+          "label": "0 (popular; tratado como 20 pela documentação)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "name": "SystemResponsiveness", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["mmcss", "myth", "audio", "latency"],
+      "benchmarkProcedure": "AvQuerySystemResponsiveness para confirmar o valor efetivo; CapFrameX em 2 jogos com áudio ativo, 3 execuções por valor.",
+      "origin": "Guias de latência/jogos desde o Windows Vista (SpeedGuide, guias do YouTube)."
+    },
+    {
+      "id": "gaming.mmcss.gamestask",
+      "name": { "pt": "MMCSS: prioridades da tarefa 'Games'", "en": "MMCSS 'Games' task priorities" },
+      "category": "Gaming",
+      "subcategory": "MMCSS",
+      "technicalDescription": "Valores em HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games: 'GPU Priority' (DWORD, padrão 8), 'Priority' (DWORD, padrão 2), 'Scheduling Category' (REG_SZ, padrão Medium), 'SFIO Priority' (REG_SZ, padrão Normal). O tweak popular usa 8/6/High/High.",
+      "plainExplanation": "Ajuste famoso que 'aumenta a prioridade dos jogos'. Na prática só afeta threads que o próprio jogo registra na tarefa 'Games' do MMCSS (poucos fazem isso), e a Microsoft documenta que 'GPU Priority' ainda não é usado e 'SFIO Priority' não é usado.",
+      "evidence": "Documentação oficial: GPU Priority 'not yet used', SFIO Priority 'not used'; a categoria/prioridade só se aplica a threads que chamam AvSetMmThreadCharacteristics('Games'). Não há benchmarks confiáveis de ganho. Placebo.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service"
+      ],
+      "grade": "D",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Scheduling Category High eleva threads registradas para prioridade 23–26 (acima de quase tudo), o que, em jogos que se registram, pode prejudicar áudio e entrada.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (8 / 2 / Medium / Normal)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "GPU Priority", "kind": "DWord", "value": "8" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "Priority", "kind": "DWord", "value": "2" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "Scheduling Category", "kind": "String", "value": "Medium" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "SFIO Priority", "kind": "String", "value": "Normal" }
+          ]
+        },
+        {
+          "key": "popular-high",
+          "label": "Tweak popular (8 / 6 / High / High)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "GPU Priority", "kind": "DWord", "value": "8" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "Priority", "kind": "DWord", "value": "6" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "Scheduling Category", "kind": "String", "value": "High" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games", "name": "SFIO Priority", "kind": "String", "value": "High" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["mmcss", "myth", "priority"],
+      "benchmarkProcedure": "Verificar com ETW/WPA se as threads do jogo estão registradas no MMCSS 'Games' (sem registro, o efeito é nulo por definição); CapFrameX em 2 jogos, 3 execuções.",
+      "origin": "Guias de 'gaming tweaks' desde o Windows 7."
+    },
+    {
+      "id": "gaming.mouse.acceleration",
+      "name": { "pt": "Aceleração do mouse ('Aprimorar precisão do ponteiro')", "en": "Mouse acceleration (Enhance pointer precision)" },
+      "category": "Gaming",
+      "subcategory": "Entrada",
+      "technicalDescription": "Valores REG_SZ em HKCU\\Control Panel\\Mouse: MouseSpeed (1 = aceleração ligada), MouseThreshold1 (6) e MouseThreshold2 (10) correspondem ao array de SPI_SETMOUSE. Desligar = \"0\",\"0\",\"0\".",
+      "plainExplanation": "Com 'Aprimorar precisão do ponteiro', o cursor anda mais quando você move o mouse rápido. Desligar dá movimento 1:1 e consistente, preferido por quem joga FPS. Jogos com 'raw input' já ignoram essa opção dentro do jogo.",
+      "evidence": "Mecanismo documentado (SPI_SETMOUSE). O ganho é de consistência de mira (memória muscular), não de FPS; em jogos com raw input não há efeito dentro do jogo. Preferência com benefício plausível.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Em telas grandes/alta resolução, mouses de DPI baixo podem exigir mais movimento físico.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Aceleração ligada (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Mouse", "name": "MouseSpeed", "kind": "String", "value": "1" },
+            { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Mouse", "name": "MouseThreshold1", "kind": "String", "value": "6" },
+            { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Mouse", "name": "MouseThreshold2", "kind": "String", "value": "10" }
+          ]
+        },
+        {
+          "key": "off",
+          "label": "Aceleração desligada (1:1)",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Mouse", "name": "MouseSpeed", "kind": "String", "value": "0" },
+            { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Mouse", "name": "MouseThreshold1", "kind": "String", "value": "0" },
+            { "type": "registry", "hive": "HKCU", "path": "Control Panel\\Mouse", "name": "MouseThreshold2", "kind": "String", "value": "0" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["input", "mouse", "aim", "preference"],
+      "benchmarkProcedure": "Teste de consistência: mover o mouse a mesma distância física em velocidades diferentes e comparar a distância do cursor (deve ser igual com aceleração desligada).",
+      "origin": "Comunidade de FPS competitivo."
+    }
+  ]
+}

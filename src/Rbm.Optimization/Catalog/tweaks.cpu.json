@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "cpu.power.boostmode",
+      "name": { "pt": "Modo de boost do processador", "en": "Processor performance boost mode" },
+      "category": "CPU",
+      "subcategory": "Plano de energia",
+      "technicalDescription": "Altera a configuração oculta PERFBOOSTMODE (GUID be337238-0d82-4146-a960-4f3749d470c7, subgrupo SUB_PROCESSOR) do esquema ativo. Índices documentados: 0 Desativado, 1 Habilitado, 2 Agressivo, 3 Habilitado eficiente, 4 Agressivo eficiente. Em CPPC não autônomo, 'Habilitado' escolhe um alvo de boost e 'Agressivo' escolhe o boost máximo.",
+      "plainExplanation": "Controla o quanto o processador pode passar da frequência base (Turbo Boost / Precision Boost). Desligar reduz muito temperatura e consumo, mas também o desempenho em tarefas leves e jogos. O padrão do Windows já é o modo mais rápido.",
+      "evidence": "Comportamento documentado pela Microsoft (PERFBOOSTMODE). O efeito de desativar o boost é grande e mensurável (perda de desempenho mono-thread proporcional à diferença entre clock base e boost; redução de temperatura e consumo). Não há ganho de desempenho em mudar do padrão (Agressivo); o uso legítimo é reduzir calor/ruído/consumo em notebooks.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode",
+        "https://guru3d.com/story/hidden-windows-11-cpu-boost-settings-allow-users-to-finetune-performance-and-efficiency/",
+        "https://www.elevenforum.com/t/add-or-remove-processor-performance-boost-mode-in-power-options-on-windows-11.47581/"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Medium",
+      "sideEffects": "Opções diferentes de 'Agressivo' reduzem desempenho (até dezenas de % em cargas mono-thread). Afeta apenas o esquema de energia ativo; trocar de plano descarta o efeito.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "Em CPUs com CPPC autônomo (Intel Speed Shift/HWP, AMD CPPC2) os índices 1 e 2 se comportam como 'Habilitado'; o efeito principal continua sendo ligar/desligar o boost." },
+      "options": [
+        {
+          "key": "aggressive",
+          "label": "Agressivo (padrão)",
+          "notes": "Padrão dos planos Equilibrado, Alto desempenho e Desempenho máximo nas instalações limpas. Fabricantes (OEM/pacotes PPM de chipset) podem alterar o valor de fábrica.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "be337238-0d82-4146-a960-4f3749d470c7", "ac": 2, "dc": 2, "friendlyName": "Modo de aumento de desempenho do processador" }
+          ]
+        },
+        {
+          "key": "battery-moderate",
+          "label": "Agressivo na tomada, moderado na bateria",
+          "notes": "Mantém o comportamento padrão na tomada e usa 'Habilitado' na bateria para reduzir picos de consumo.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "be337238-0d82-4146-a960-4f3749d470c7", "ac": 2, "dc": 1, "friendlyName": "Modo de aumento de desempenho do processador" }
+          ]
+        },
+        {
+          "key": "enabled",
+          "label": "Habilitado (boost moderado)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "be337238-0d82-4146-a960-4f3749d470c7", "ac": 1, "dc": 1, "friendlyName": "Modo de aumento de desempenho do processador" }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado (sem turbo)",
+          "notes": "Útil apenas para reduzir temperatura/ruído; perda de desempenho significativa.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "be337238-0d82-4146-a960-4f3749d470c7", "ac": 0, "dc": 0, "friendlyName": "Modo de aumento de desempenho do processador" }
+          ]
+        }
+      ],
+      "defaultOption": "aggressive",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["power", "boost", "thermal", "laptop"],
+      "benchmarkProcedure": "Cinebench R23/2024 single e multi-core (3 execuções cada), registrando clock efetivo e temperatura (HWiNFO). Repetir na bateria em notebooks medindo consumo do pacote (W).",
+      "origin": "Configuração oficial de energia, oculta por padrão; popularizada por guias de undervolt/temperatura para notebooks."
+    },
+    {
+      "id": "cpu.power.maxstate",
+      "name": { "pt": "Estado máximo do processador", "en": "Maximum processor state" },
+      "category": "CPU",
+      "subcategory": "Plano de energia",
+      "technicalDescription": "Altera PROCTHROTTLEMAX (GUID bc5038f7-23e0-4960-96da-33abaf5935ec) no esquema ativo. Valor em % do desempenho máximo. Em muitos sistemas, 99% impede a entrada em frequências de turbo.",
+      "plainExplanation": "Limita o desempenho máximo da CPU. Abaixar de 100% é um truque antigo para esfriar notebooks: o processador fica mais lento, mas também mais frio e silencioso.",
+      "evidence": "Comportamento documentado do motor de estados de desempenho. O truque de 99% para desativar o turbo é amplamente reproduzido em notebooks Intel; em CPUs com CPPC autônomo o efeito pode ser apenas um teto de desempenho, não o desligamento exato do turbo. Nunca aumenta desempenho em relação ao padrão (100%).",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfboostmode",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfenergypreference"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Medium",
+      "sideEffects": "Reduz desempenho. Prefira 'cpu.power.boostmode' = Desativado para um controle mais explícito do turbo.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "100% (padrão)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "bc5038f7-23e0-4960-96da-33abaf5935ec", "ac": 100, "dc": 100, "friendlyName": "Estado máximo do processador" }
+          ]
+        },
+        {
+          "key": "battery-99",
+          "label": "100% na tomada, 99% na bateria",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "bc5038f7-23e0-4960-96da-33abaf5935ec", "ac": 100, "dc": 99, "friendlyName": "Estado máximo do processador" }
+          ]
+        },
+        {
+          "key": "cap-99",
+          "label": "99% sempre (limitar turbo)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "bc5038f7-23e0-4960-96da-33abaf5935ec", "ac": 99, "dc": 99, "friendlyName": "Estado máximo do processador" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["power", "thermal", "laptop"],
+      "benchmarkProcedure": "Cinebench R23 multi-core 10 min com HWiNFO registrando clock, temperatura e potência do pacote; comparar 100% vs 99%.",
+      "origin": "Truque clássico de fóruns de notebooks (Notebookreview, Reddit) para desligar o turbo sem BIOS."
+    },
+    {
+      "id": "cpu.power.epp",
+      "name": { "pt": "Preferência de energia/desempenho (EPP)", "en": "Processor energy performance preference (EPP)" },
+      "category": "CPU",
+      "subcategory": "Plano de energia",
+      "technicalDescription": "Altera PERFEPP (GUID 36687f9e-e3a5-4dbf-b1dc-15eb381c6863) no esquema ativo. Em CPUs com CPPC v2 em modo autônomo (Intel HWP/Speed Shift, AMD CPPC2), o valor (0–100%) é programado no registrador EPP como valor*255/100: 0 favorece desempenho, 100 favorece economia.",
+      "plainExplanation": "Diz ao próprio processador se ele deve priorizar velocidade ou economia ao escolher a frequência. Valores menores fazem a CPU acelerar mais cedo e ficar mais tempo em clocks altos, com mais consumo e calor.",
+      "evidence": "Mecanismo documentado pela Microsoft e pelos fabricantes (registrador EPP do CPPC). O efeito na rampa de frequência é mensurável com ferramentas de telemetria; o ganho em jogos tende a ser pequeno porque jogos já mantêm a CPU ocupada, mas tarefas interativas curtas respondem mais rápido. Custo: maior consumo em ociosidade leve.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfenergypreference",
+        "https://learn.microsoft.com/en-us/answers/questions/3966055/set-processor-performance-energy-preference-policy"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Maior consumo e temperatura em uso leve; em notebooks, menor autonomia se aplicado na bateria. Sem efeito em CPUs sem CPPC autônomo.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "Requer CPU com CPPC v2 em modo autônomo (Intel Skylake+ com HWP, AMD Zen 2+ com CPPC habilitado no firmware)." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão do plano Equilibrado (33% tomada / 50% bateria)",
+          "notes": "Valor genérico do Windows. Pacotes PPM de fabricantes alteram o padrão (ex.: drivers de chipset AMD gravam 0% na tomada). A reversão do app usa o snapshot, não este valor.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "36687f9e-e3a5-4dbf-b1dc-15eb381c6863", "ac": 33, "dc": 50, "friendlyName": "Política de preferência de desempenho de energia do processador" }
+          ]
+        },
+        {
+          "key": "ac-performance",
+          "label": "Desempenho na tomada (0%), bateria inalterada",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "36687f9e-e3a5-4dbf-b1dc-15eb381c6863", "ac": 0, "dc": null, "friendlyName": "Política de preferência de desempenho de energia do processador" }
+          ]
+        },
+        {
+          "key": "efficiency",
+          "label": "Eficiência (60% tomada / 80% bateria)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "36687f9e-e3a5-4dbf-b1dc-15eb381c6863", "ac": 60, "dc": 80, "friendlyName": "Política de preferência de desempenho de energia do processador" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["power", "epp", "cppc", "latency"],
+      "benchmarkProcedure": "Medir tempo de resposta de tarefas curtas (ex.: abertura de apps, compilação incremental) e potência ociosa do pacote (HWiNFO) por 5 min; em jogos, comparar 1% low com CapFrameX (3 execuções).",
+      "origin": "Configuração oficial oculta; popular em guias de latência e no ThrottleStop/ParkControl."
+    },
+    {
+      "id": "cpu.hybrid.schedpolicy",
+      "name": { "pt": "Política de agendamento heterogêneo (P-cores/E-cores)", "en": "Heterogeneous thread scheduling policy" },
+      "category": "CPU",
+      "subcategory": "CPUs híbridas",
+      "technicalDescription": "Altera SCHEDPOLICY (GUID 93b8b6dc-0698-4d1c-9ee4-0644e900c85d) no esquema ativo: preferência de processador para threads de longa duração em CPUs heterogêneas. Índices: 0 Todos, 1 Somente performáticos, 2 Preferir performáticos, 3 Somente eficientes, 4 Preferir eficientes, 5 Automático.",
+      "plainExplanation": "Em processadores com núcleos de desempenho (P) e de eficiência (E), decide onde o Windows coloca tarefas longas. O padrão 'Automático' usa o Thread Director/QoS. Forçar núcleos P pode ajudar um jogo mal classificado, mas pode piorar tarefas multi-thread.",
+      "evidence": "Valores documentados pela Microsoft. Não há benchmarks independentes consistentes mostrando ganho geral ao trocar o padrão; relatos de usuários são mistos e dependentes do jogo e da geração de CPU (Alder Lake vs. Raptor/Arrow Lake). O Thread Director e as atualizações do agendador do Windows 11 já tratam o caso comum.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configuration-for-hetero-power-scheduling-schedulingpolicy",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/configuration-for-hetero-power-scheduling-shortschedulingpolicy",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/static-configuration-options-for-heterogeneous-power-scheduling"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Medium",
+      "impact": "Unknown",
+      "sideEffects": "'Somente performáticos' impede o uso dos E-cores por threads longas, podendo reduzir desempenho multi-thread e aumentar consumo. Sem efeito em CPUs não híbridas.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 22000, "requiresHybridCpu": true, "notes": "Relevante apenas para CPUs híbridas (Intel 12ª geração+, alguns AMD Zen 5/5c, ARM)." },
+      "options": [
+        {
+          "key": "automatic",
+          "label": "Automático (padrão)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "93b8b6dc-0698-4d1c-9ee4-0644e900c85d", "ac": 5, "dc": 5, "friendlyName": "Política de agendamento de thread heterogênea" }
+          ]
+        },
+        {
+          "key": "prefer-performant",
+          "label": "Preferir núcleos de desempenho",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "93b8b6dc-0698-4d1c-9ee4-0644e900c85d", "ac": 2, "dc": 2, "friendlyName": "Política de agendamento de thread heterogênea" }
+          ]
+        },
+        {
+          "key": "performant-only",
+          "label": "Somente núcleos de desempenho",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "93b8b6dc-0698-4d1c-9ee4-0644e900c85d", "ac": 1, "dc": 1, "friendlyName": "Política de agendamento de thread heterogênea" }
+          ]
+        }
+      ],
+      "defaultOption": "automatic",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["hybrid", "scheduler", "p-core", "e-core"],
+      "benchmarkProcedure": "Em CPU híbrida: CapFrameX em 3 jogos (média e 1% low, 3 execuções cada) + Cinebench multi-core; comparar Automático vs. Preferir performáticos.",
+      "origin": "Configuração oficial oculta exposta por guias de Alder Lake (Guru3D, Reddit r/intel)."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Rbm.Gaming</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rbm.Core\Rbm.Core.csproj" />
+    <ProjectReference Include="..\Rbm.Security\Rbm.Security.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Rbm.Restore</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rbm.Core\Rbm.Core.csproj" />
+    <ProjectReference Include="..\Rbm.Data\Rbm.Data.csproj" />
+    <ProjectReference Include="..\Rbm.Optimization\Rbm.Optimization.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Management" />
+  </ItemGroup>
+</Project>

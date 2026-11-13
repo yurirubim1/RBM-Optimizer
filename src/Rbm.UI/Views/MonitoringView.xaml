@@ -1,0 +1,143 @@
+<UserControl x:Class="Rbm.UI.Views.MonitoringView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Rbm.UI.Controls">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/RBMOptimizer;component/Pages/Hardware/HwResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <StackPanel>
+            <!-- ===== Resumo + controles ===== -->
+            <Border Style="{StaticResource Hero}">
+                <StackPanel>
+                    <ContentControl Content="{Binding Hero}" Focusable="False" />
+                    <WrapPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <TextBlock Text="Atualizar a cada" Style="{StaticResource T.Muted}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <Border Background="{StaticResource B.Surface2}" CornerRadius="8" Padding="3" VerticalAlignment="Center"
+                                ToolTip="Intervalo de amostragem da telemetria (vale para todo o aplicativo). Intervalos maiores reduzem ainda mais o custo e ampliam a janela dos gráficos.">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource Segment}" GroupName="monInterval" Content="1 s" IsChecked="{Binding Is1s, Mode=OneWay}" Command="{Binding SetIntervalCommand}" CommandParameter="1" />
+                                <RadioButton Style="{StaticResource Segment}" GroupName="monInterval" Content="2 s" IsChecked="{Binding Is2s, Mode=OneWay}" Command="{Binding SetIntervalCommand}" CommandParameter="2" />
+                                <RadioButton Style="{StaticResource Segment}" GroupName="monInterval" Content="5 s" IsChecked="{Binding Is5s, Mode=OneWay}" Command="{Binding SetIntervalCommand}" CommandParameter="5" />
+                            </StackPanel>
+                        </Border>
+                        <Button Command="{Binding TogglePauseCommand}" Margin="12,0,0,0" Padding="12,6" VerticalAlignment="Center"
+                                ToolTip="Pausa/retoma a coleta de telemetria do aplicativo (o mesmo controle da barra de status).">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding PauseIcon}" Style="{StaticResource T.Icon}" FontSize="12" Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding PauseText}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding PerCore}" Margin="20,0,0,0" VerticalAlignment="Center"
+                                      ToolTip="Mostra uma linha por thread lógica no gráfico do processador.">
+                            <TextBlock Text="Processador: uma linha por núcleo" Style="{StaticResource T.Base}" />
+                        </ToggleButton>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Callout}" Margin="0,0,12,12">
+                <DockPanel>
+                    <TextBlock Text="&#xE946;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.Info}" FontSize="15" VerticalAlignment="Top" Margin="0,2,10,0" />
+                    <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12.5"
+                               Text="Como ler: cada gráfico mostra os últimos minutos, com a leitura mais recente à direita. O número ao lado de cada nome na legenda é o valor de agora; passe o mouse sobre ele para ver de onde vem. Leituras indisponíveis não são desenhadas nem estimadas — lacunas não viram zero." />
+                </DockPanel>
+            </Border>
+
+            <!-- ===== Processador e memória ===== -->
+            <TextBlock Text="Processador e memória" Style="{StaticResource T.Section}" />
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Uso do processador" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Uso total (%), além de velocidade, limitação e fila de espera na legenda." Style="{StaticResource T.Muted}" FontSize="12" TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding CpuLegend}" Style="{StaticResource Hw.LegendList}" />
+                        <c:LineChart Height="160" Series="{Binding CpuChart}" Maximum="100" Unit="%" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Uso da memória" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="RAM em uso e memória comprometida (commit), em % do limite." Style="{StaticResource T.Muted}" FontSize="12" TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding MemLegend}" Style="{StaticResource Hw.LegendList}" />
+                        <c:LineChart Height="160" Series="{Binding MemChart}" Maximum="100" Unit="%" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ===== Placa de vídeo e temperaturas ===== -->
+            <TextBlock Text="Placa de vídeo e temperaturas" Style="{StaticResource T.Section}" />
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Uso da placa de vídeo" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Trabalho 3D (%) e memória de vídeo em uso (%), por placa." Style="{StaticResource T.Muted}" FontSize="12" TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding GpuLegend}" Style="{StaticResource Hw.LegendList}" />
+                        <c:LineChart Height="160" Series="{Binding GpuChart}" Maximum="100" Unit="%" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Temperaturas" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="°C — apenas sensores realmente disponíveis." Style="{StaticResource T.Muted}" FontSize="12" />
+                        <ItemsControl ItemsSource="{Binding TempLegend}" Style="{StaticResource Hw.LegendList}" />
+                        <c:LineChart Height="160" Series="{Binding TempChart}" Unit="°" Visibility="{Binding HasTemps, Converter={StaticResource Vis}}" />
+                        <Border Height="160" Visibility="{Binding HasTemps, Converter={StaticResource VisInv}}" Background="{StaticResource B.Surface2}" CornerRadius="8">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="&#xE9CA;" Style="{StaticResource EmptyIcon}" FontSize="28" Margin="0,0,0,6" />
+                                <TextBlock Text="Nenhum sensor de temperatura disponível nesta sessão." Style="{StaticResource T.Muted}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="{Binding TempStatus}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,8,0,0"
+                                   Visibility="{Binding TempStatus, Converter={StaticResource Vis}}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ===== Disco e rede ===== -->
+            <TextBlock Text="Disco e rede" Style="{StaticResource T.Section}" />
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Disco — velocidade" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="MB/s de leitura e gravação (todos os discos somados)." Style="{StaticResource T.Muted}" FontSize="12" />
+                        <ItemsControl ItemsSource="{Binding DiskRateLegend}" Style="{StaticResource Hw.LegendList}" />
+                        <c:LineChart Height="130" Series="{Binding DiskRateChart}" LabelFormat="0.#" />
+                        <TextBlock Text="Disco — quanto está ocupado (%)" Style="{StaticResource T.H3}" Margin="0,14,0,0" />
+                        <ItemsControl ItemsSource="{Binding DiskActiveLegend}" Style="{StaticResource Hw.LegendList}" />
+                        <c:LineChart Height="110" Series="{Binding DiskActiveChart}" Maximum="100" Unit="%" />
+                    </StackPanel>
+                </Border>
+                <StackPanel Grid.Column="1">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Rede" Style="{StaticResource T.H2}" />
+                            <TextBlock Text="Mb/s (megabits por segundo), todas as conexões somadas." Style="{StaticResource T.Muted}" FontSize="12" />
+                            <ItemsControl ItemsSource="{Binding NetLegend}" Style="{StaticResource Hw.LegendList}" />
+                            <c:LineChart Height="120" Series="{Binding NetChart}" LabelFormat="0.#" />
+                        </StackPanel>
+                    </Border>
+                    <!-- ===== Avançado ===== -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Avançado: tempo gasto por drivers (DPC / ISR)" Style="{StaticResource T.H2}" TextWrapping="Wrap" TextTrimming="None" />
+                            <TextBlock Text="% do processador ocupado atendendo drivers e interrupções de hardware. Valores altos e contínuos podem causar estalos no áudio e travadinhas — investigue na página Latência."
+                                       Style="{StaticResource T.Muted}" FontSize="12" TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding LatencyLegend}" Style="{StaticResource Hw.LegendList}" />
+                            <c:LineChart Height="100" Series="{Binding LatencyChart}" LabelFormat="0.##" Unit="%" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+            <TextBlock Style="{StaticResource T.Caption}" FontSize="11.5" Margin="2,0,12,0" TextWrapping="Wrap"
+                       Text="Fonte: histórico real do serviço de telemetria (contadores PDH do Windows + sensores do LibreHardwareMonitor)." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

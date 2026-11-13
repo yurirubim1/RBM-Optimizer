@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "default",
+      "name": { "pt": "Padrão do Windows", "en": "Windows Default" },
+      "description": "Restaura o estado original registrado antes das alterações do RBM Optimizer. Não contém ajustes próprios; a restauração é feita pelo app a partir dos snapshots.",
+      "kind": "system",
+      "entries": [],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "safe",
+      "name": { "pt": "Otimização Segura", "en": "Safe Optimization" },
+      "description": "Somente ajustes de risco mínimo com evidência sólida: garante que recursos de manutenção do SSD estejam ativos, que a gravação em segundo plano do Game Bar esteja desligada e que o Modo de Jogo esteja ligado. Ideal como ponto de partida para qualquer PC.",
+      "kind": "system",
+      "entries": [
+        { "tweakId": "storage.trim", "option": "enabled", "rationale": "TRIM é essencial para manter o desempenho de gravação do SSD; corrige sistemas onde foi desligado." },
+        { "tweakId": "storage.optimize.task", "option": "enabled", "rationale": "Mantém o Retrim periódico do SSD e a desfragmentação de HDDs; desligar é um mito prejudicial." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "A gravação contínua consome codificador, memória e disco durante jogos; padrão do Windows é desligada." },
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Padrão do Windows; evita interrupções do Windows Update e notificações durante jogos." },
+        { "tweakId": "storage.ntfs.lastaccess", "option": "disabled", "rationale": "Elimina gravações de metadados ao ler arquivos; recomendação documentada pela Microsoft, risco mínimo." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "balanced",
+      "name": { "pt": "Otimização Balanceada", "en": "Balanced Optimization" },
+      "description": "Otimização Segura mais ajustes de baixo risco que melhoram latência de apresentação em jogos em janela e a sensação de agilidade da interface, sem custo relevante de energia.",
+      "kind": "system",
+      "entries": [
+        { "tweakId": "storage.trim", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.optimize.task", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.ntfs.lastaccess", "option": "disabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gpu.windowed.optimizations", "option": "on", "rationale": "Flip model para jogos DX10/11 em janela: menor latência documentada pela Microsoft e VRR/Auto HDR em janela." },
+        { "tweakId": "windows.visual.menushowdelay", "option": "fast", "rationale": "Reduz o atraso artificial de 400 ms dos submenus clássicos; efeito apenas de percepção, sem risco." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "competitive",
+      "name": { "pt": "Gaming Competitivo", "en": "Competitive Gaming" },
+      "description": "Balanceada mais ajustes que trocam consumo de energia por resposta mais rápida quando ligado na tomada (EPP, USB, PCIe) e remove capturas do Game Bar e aceleração do mouse. Os ajustes de energia se aplicam apenas na tomada.",
+      "kind": "system",
+      "entries": [
+        { "tweakId": "storage.trim", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.optimize.task", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.ntfs.lastaccess", "option": "disabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gpu.windowed.optimizations", "option": "on", "rationale": "Menor latência em jogos DX10/11 em janela sem bordas." },
+        { "tweakId": "windows.visual.menushowdelay", "option": "fast", "rationale": "Interface mais ágil." },
+        { "tweakId": "cpu.power.epp", "option": "ac-performance", "rationale": "Em CPUs com CPPC autônomo, faz a CPU acelerar mais cedo na tomada; custo: mais consumo em uso leve." },
+        { "tweakId": "power.usb.selectivesuspend", "option": "disabled-ac", "rationale": "Evita suspensão de periféricos USB (DACs, controles) na tomada; corrige reconexões/atrasos em alguns dispositivos." },
+        { "tweakId": "power.pcie.aspm", "option": "off-ac", "rationale": "Remove latência de saída de estados de baixo consumo dos links PCIe na tomada; custo energético pequeno em desktops." },
+        { "tweakId": "gaming.gamedvr.capture", "option": "disabled", "rationale": "Remove os ganchos de captura do Game Bar para quem grava com outro software ou não grava." },
+        { "tweakId": "gaming.mouse.acceleration", "option": "off", "rationale": "Movimento 1:1 e consistente fora de jogos com raw input; preferência de jogadores competitivos." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "workstation",
+      "name": { "pt": "Estação de Trabalho", "en": "Workstation" },
+      "description": "Foco em produtividade e tarefas longas (renderização, compilação, grandes volumes de arquivos): manutenção de SSD, sistema de arquivos mais leve em pastas grandes, sem suspensão na tomada e boot sempre limpo.",
+      "kind": "system",
+      "entries": [
+        { "tweakId": "storage.trim", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.optimize.task", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.ntfs.lastaccess", "option": "disabled", "rationale": "Menos gravações de metadados em operações com muitos arquivos." },
+        { "tweakId": "storage.ntfs.8dot3", "option": "except-system", "rationale": "Acelera criação de arquivos em pastas enormes nos volumes de dados, mantendo compatibilidade no volume do sistema." },
+        { "tweakId": "storage.disk.idle", "option": "never-ac", "rationale": "Evita esperas de spin-up de HDDs de dados durante trabalho intermitente." },
+        { "tweakId": "power.sleep.timeout", "option": "never-ac", "rationale": "Evita que renderizações/compilações longas sem interação sejam interrompidas pela suspensão." },
+        { "tweakId": "cpu.power.epp", "option": "ac-performance", "rationale": "Resposta mais rápida da CPU em tarefas interativas curtas na tomada." },
+        { "tweakId": "windows.faststartup", "option": "disabled", "rationale": "Boot completo a cada desligamento: drivers reinicializados e atualizações aplicadas de forma previsível." },
+        { "tweakId": "windows.explorer.showfileext", "option": "show", "rationale": "Higiene de segurança: identificar extensões duplas maliciosas." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "laptop",
+      "name": { "pt": "Notebook", "en": "Laptop" },
+      "description": "Ajustes seguros que não prejudicam a bateria, com boost menos agressivo apenas na bateria para reduzir temperatura e consumo.",
+      "kind": "system",
+      "entries": [
+        { "tweakId": "storage.trim", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "storage.optimize.task", "option": "enabled", "rationale": "Base da Otimização Segura." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "A gravação contínua também consome bateria." },
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Padrão do Windows." },
+        { "tweakId": "storage.ntfs.lastaccess", "option": "disabled", "rationale": "Menos gravações em disco." },
+        { "tweakId": "cpu.power.boostmode", "option": "battery-moderate", "rationale": "Mantém o boost agressivo na tomada e usa boost moderado na bateria, reduzindo picos de consumo e temperatura." }
+      ],
+      "conditions": { "formFactor": "Laptop" }
+    },
+    {
+      "id": "experimental",
+      "name": { "pt": "Experimental (Advanced Tweaks Lab)", "en": "Experimental (Advanced Tweaks Lab)" },
+      "description": "Perfil vazio: os itens do Advanced Tweaks Lab são aplicados somente individualmente, com aviso, snapshot e procedimento de benchmark próprio.",
+      "kind": "system",
+      "entries": [],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "gaming-competitive",
+      "name": { "pt": "Jogos: Competitivo", "en": "Gaming: Competitive" },
+      "description": "Prioriza latência e consistência: Modo de Jogo, sem capturas do Game Bar, flip model em janela, CPU e links PCIe/USB sem economia na tomada e mouse 1:1.",
+      "kind": "gaming",
+      "entries": [
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Evita interrupções durante a partida." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Sem gravação contínua competindo por recursos." },
+        { "tweakId": "gaming.gamedvr.capture", "option": "disabled", "rationale": "Remove ganchos de captura do Game Bar." },
+        { "tweakId": "gpu.windowed.optimizations", "option": "on", "rationale": "Menor latência de apresentação em jogos DX10/11 em janela sem bordas." },
+        { "tweakId": "cpu.power.epp", "option": "ac-performance", "rationale": "Rampa de frequência mais agressiva na tomada." },
+        { "tweakId": "power.usb.selectivesuspend", "option": "disabled-ac", "rationale": "Periféricos USB sempre ativos na tomada." },
+        { "tweakId": "power.pcie.aspm", "option": "off-ac", "rationale": "Sem latência de saída de L0s/L1 nos links PCIe na tomada." },
+        { "tweakId": "gaming.mouse.acceleration", "option": "off", "rationale": "Mira consistente (1:1) em jogos sem raw input e no desktop." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "gaming-balanced",
+      "name": { "pt": "Jogos: Balanceado", "en": "Gaming: Balanced" },
+      "description": "Ajustes de jogo sem custo de energia relevante: Modo de Jogo, sem gravação contínua e flip model em janela.",
+      "kind": "gaming",
+      "entries": [
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Evita interrupções durante o jogo." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Sem gravação contínua." },
+        { "tweakId": "gpu.windowed.optimizations", "option": "on", "rationale": "Menor latência e VRR em jogos DX10/11 em janela." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "gaming-visual",
+      "name": { "pt": "Jogos: Qualidade Visual Máxima", "en": "Gaming: Maximum Visual Quality" },
+      "description": "Habilita os pré-requisitos do Windows para recursos visuais modernos: HAGS (necessário para DLSS Frame Generation) e flip model em janela (Auto HDR e VRR em janela).",
+      "kind": "gaming",
+      "entries": [
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Evita interrupções durante o jogo." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Sem gravação contínua." },
+        { "tweakId": "gpu.hags", "option": "on", "rationale": "Requisito do DLSS Frame Generation em GPUs NVIDIA compatíveis." },
+        { "tweakId": "gpu.windowed.optimizations", "option": "on", "rationale": "Permite Auto HDR e VRR em jogos DX10/11 em janela." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "gaming-lowend",
+      "name": { "pt": "Jogos: PC Modesto", "en": "Gaming: Low-End PC" },
+      "description": "Reduz atividade e efeitos em segundo plano para liberar RAM e GPU integrada: sem Widgets, sem apps da Store em segundo plano, sem transparência e animações.",
+      "kind": "gaming",
+      "entries": [
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Evita interrupções durante o jogo." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Gravação contínua é especialmente cara em hardware modesto." },
+        { "tweakId": "gaming.gamedvr.capture", "option": "disabled", "rationale": "Remove ganchos de captura." },
+        { "tweakId": "windows.visual.transparency", "option": "off", "rationale": "Alivia a composição do DWM em GPUs integradas." },
+        { "tweakId": "windows.widgets.policy", "option": "disabled", "rationale": "Libera a memória dos processos WebView2 dos Widgets." },
+        { "tweakId": "windows.backgroundapps.policy", "option": "force-deny", "rationale": "Impede apps da Store de rodarem em segundo plano; custo: sem notificações desses apps com eles fechados." },
+        { "tweakId": "windows.visual.taskbaranimations", "option": "off", "rationale": "Menos trabalho de composição." },
+        { "tweakId": "windows.visual.minanimate", "option": "off", "rationale": "Troca de janelas instantânea." }
+      ],
+      "conditions": { "formFactor": null }
+    },
+    {
+      "id": "gaming-laptop",
+      "name": { "pt": "Jogos: Notebook Gamer", "en": "Gaming: Gaming Laptop" },
+      "description": "Ajustes de jogo que não forçam o hardware além do padrão na tomada; inclui Wi‑Fi sem economia na bateria para evitar picos de ping.",
+      "kind": "gaming",
+      "entries": [
+        { "tweakId": "gaming.gamemode", "option": "on", "rationale": "Evita interrupções durante o jogo." },
+        { "tweakId": "gaming.gamedvr.backgroundrecording", "option": "off", "rationale": "Sem gravação contínua (economiza também bateria)." },
+        { "tweakId": "gaming.gamedvr.capture", "option": "disabled", "rationale": "Remove ganchos de captura do Game Bar." },
+        { "tweakId": "gpu.windowed.optimizations", "option": "on", "rationale": "Menor latência e VRR em janela." },
+        { "tweakId": "network.wifi.powersaving", "option": "max-performance", "rationale": "Evita o modo de economia 802.11 na bateria (picos de latência); custo: menor autonomia." }
+      ],
+      "conditions": { "formFactor": "Laptop" }
+    }
+  ]
+}

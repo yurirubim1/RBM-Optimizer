@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "power.usb.selectivesuspend",
+      "name": { "pt": "Suspensão seletiva USB", "en": "USB selective suspend" },
+      "category": "Energia",
+      "subcategory": "USB",
+      "technicalDescription": "Altera 'Configuração de suspensão seletiva USB' (GUID 48e6b7a6-50f5-4782-a5d4-53bb8f07e226, subgrupo 2a737441-1930-4402-8d77-b2bebba308a3) no esquema ativo: 1 = habilitada (padrão), 0 = desabilitada. Permite ao driver de hub suspender portas USB ociosas individualmente.",
+      "plainExplanation": "O Windows desliga portas USB que não estão em uso para economizar energia. Alguns periféricos (DACs, controles, adaptadores) reconectam ou demoram para 'acordar'. Desligar a suspensão resolve esses casos em desktops.",
+      "evidence": "Mecanismo documentado do driver USB. A desativação é uma correção amplamente relatada para desconexões/atrasos de periféricos específicos; mouses e teclados HID modernos normalmente não são suspensos durante uso. Sem ganho de desempenho genérico — benefício dependente do dispositivo.",
+      "references": [
+        "https://learn.microsoft.com/windows-hardware/drivers/usbcon/usb-selective-suspend",
+        "https://techcommunity.microsoft.com/blog/microsoftusbblog/demystifying-usb-selective-suspend/270736",
+        "https://elevenforum.com/t/enable-or-disable-usb-selective-suspend-in-windows-11.10251/"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Maior consumo em repouso; em notebooks reduz autonomia e pode afetar o Modern Standby.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Habilitada (padrão)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "2a737441-1930-4402-8d77-b2bebba308a3", "setting": "48e6b7a6-50f5-4782-a5d4-53bb8f07e226", "ac": 1, "dc": 1, "friendlyName": "Configuração de suspensão seletiva USB" }
+          ]
+        },
+        {
+          "key": "disabled-ac",
+          "label": "Desabilitada na tomada (bateria inalterada)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "2a737441-1930-4402-8d77-b2bebba308a3", "setting": "48e6b7a6-50f5-4782-a5d4-53bb8f07e226", "ac": 0, "dc": null, "friendlyName": "Configuração de suspensão seletiva USB" }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desabilitada sempre",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "2a737441-1930-4402-8d77-b2bebba308a3", "setting": "48e6b7a6-50f5-4782-a5d4-53bb8f07e226", "ac": 0, "dc": 0, "friendlyName": "Configuração de suspensão seletiva USB" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["usb", "power", "peripherals", "troubleshooting"],
+      "benchmarkProcedure": "Reproduzir o problema do periférico (desconexão/atraso após ociosidade) com cada opção; consumo ocioso na tomada (medidor de parede) por 15 min.",
+      "origin": "Opções de Energia avançadas; guias de áudio profissional e de periféricos."
+    },
+    {
+      "id": "power.pcie.aspm",
+      "name": { "pt": "Gerenciamento de energia do link PCI Express (ASPM)", "en": "PCI Express Link State Power Management" },
+      "category": "Energia",
+      "subcategory": "PCI Express",
+      "technicalDescription": "Altera 'Gerenciamento de Energia do Estado da Conexão' (GUID ee12f906-d277-404b-b6da-e5fa1a576df5, subgrupo 501a4d13-42af-4429-9fd1-a8218c268e20) no esquema ativo: 0 = desligado, 1 = economia moderada (L0s), 2 = economia máxima (L1). Só tem efeito se o firmware conceder controle de ASPM ao sistema operacional (_OSC).",
+      "plainExplanation": "Permite que os links PCIe (placa de vídeo, SSD NVMe, rede) entrem em modos de baixo consumo quando ociosos. Desligar pode evitar pequenos atrasos ao 'acordar' e instabilidades raras, ao custo de mais consumo.",
+      "evidence": "Comportamento definido pela especificação PCIe e exposto nas Opções de Energia. Há relatos de correção de instabilidade/latência com ASPM desligado em plataformas específicas, mas não há benchmarks independentes mostrando ganho geral de FPS. Em desktops o custo energético é pequeno; em notebooks é relevante. Dependente da plataforma.",
+      "references": [
+        "https://www.techpowerup.com/forums/threads/high-latencymon-reporting.276538",
+        "https://forums.anandtech.com/threads/in-case-your-card-crashes-totally-random-once-every-week-or-every-few-weeks.2613247"
+      ],
+      "grade": "B",
+      "confidence": "Low",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Maior consumo e temperatura de componentes PCIe em ociosidade; em notebooks reduz autonomia.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "Se o BIOS não delega ASPM ao Windows, a configuração não tem efeito; o BIOS pode ter sua própria opção de ASPM." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (moderada na tomada / máxima na bateria)",
+          "notes": "Padrão do plano Equilibrado. Alto desempenho usa 'Desligado'.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "501a4d13-42af-4429-9fd1-a8218c268e20", "setting": "ee12f906-d277-404b-b6da-e5fa1a576df5", "ac": 1, "dc": 2, "friendlyName": "Gerenciamento de energia do estado da conexão" }
+          ]
+        },
+        {
+          "key": "off-ac",
+          "label": "Desligado na tomada (bateria inalterada)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "501a4d13-42af-4429-9fd1-a8218c268e20", "setting": "ee12f906-d277-404b-b6da-e5fa1a576df5", "ac": 0, "dc": null, "friendlyName": "Gerenciamento de energia do estado da conexão" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["pcie", "aspm", "power", "latency"],
+      "benchmarkProcedure": "LatencyMon (10 min, DPC/ISR máximos) e CapFrameX em 2 jogos, 3 execuções por opção; consumo ocioso na tomada.",
+      "origin": "Opções de Energia avançadas; guias de latência."
+    },
+    {
+      "id": "power.sleep.timeout",
+      "name": { "pt": "Suspender após inatividade", "en": "Sleep after" },
+      "category": "Energia",
+      "subcategory": "Suspensão",
+      "technicalDescription": "Altera STANDBYIDLE (GUID 29f6c1db-86da-48c5-9fdb-f2b67b1f44da, subgrupo 238c9fa8-0aad-41ed-83f4-97be242c8f20) no esquema ativo, em segundos. 0 = nunca.",
+      "plainExplanation": "Quanto tempo o PC espera sem uso antes de entrar em suspensão. Para renderizações ou downloads longos na tomada, 'nunca' evita interrupções; para o resto, o padrão economiza energia.",
+      "evidence": "Comportamento documentado. Tarefas longas sem interação (render, compilação) podem ser interrompidas pela suspensão se o aplicativo não solicitar 'sistema necessário'. Benefício é funcional, não de desempenho.",
+      "references": [],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Maior consumo de energia com o PC ocioso.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (15 min tomada / 10 min bateria)",
+          "notes": "Padrão do Windows 11 recente. Builds mais antigas usavam 30 min / 15 min; OEMs podem alterar.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "238c9fa8-0aad-41ed-83f4-97be242c8f20", "setting": "29f6c1db-86da-48c5-9fdb-f2b67b1f44da", "ac": 900, "dc": 600, "friendlyName": "Suspender depois de" }
+          ]
+        },
+        {
+          "key": "never-ac",
+          "label": "Nunca na tomada (bateria inalterada)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "238c9fa8-0aad-41ed-83f4-97be242c8f20", "setting": "29f6c1db-86da-48c5-9fdb-f2b67b1f44da", "ac": 0, "dc": null, "friendlyName": "Suspender depois de" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["power", "sleep", "workstation"],
+      "benchmarkProcedure": "Não aplicável a desempenho; verificar com 'powercfg /requests' e uma tarefa longa sem interação.",
+      "origin": "Opções de Energia padrão."
+    }
+  ]
+}

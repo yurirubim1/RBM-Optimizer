@@ -1,0 +1,401 @@
+<UserControl x:Class="Rbm.UI.Views.BenchmarksView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels"
+             xmlns:pa="clr-namespace:Rbm.UI.Pages.Analysis">
+    <UserControl.Resources>
+        <pa:BrushKeyConverter x:Key="BK" />
+        <DataTemplate x:Key="BulletItem">
+            <DockPanel Margin="0,2">
+                <TextBlock DockPanel.Dock="Left" Text="•" Style="{StaticResource T.Muted}" Margin="0,0,8,0" />
+                <TextBlock Text="{Binding}" Style="{StaticResource T.WrapMuted}" FontSize="12" />
+            </DockPanel>
+        </DataTemplate>
+        <!-- TechDetails define o cabeçalho como um único TextBlock compartilhado (só pode ser usado uma vez por página): aqui o cabeçalho é texto. -->
+        <Style x:Key="Tech" TargetType="Expander" BasedOn="{StaticResource TechDetails}">
+            <Setter Property="Header" Value="Detalhes técnicos" />
+            <Setter Property="Foreground" Value="{StaticResource B.TextMuted}" />
+            <Setter Property="FontSize" Value="12.5" />
+        </Style>
+        <Style x:Key="LevelChip" TargetType="Border" BasedOn="{StaticResource Chip.Info}">
+            <Style.Triggers>
+                <Trigger Property="Tag" Value="ok"><Setter Property="Background" Value="{StaticResource B.SuccessSoft}" /></Trigger>
+                <Trigger Property="Tag" Value="warn"><Setter Property="Background" Value="{StaticResource B.WarningSoft}" /></Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="LevelChipText" TargetType="TextBlock" BasedOn="{StaticResource T.Base}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource B.Info}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=Border}}" Value="ok"><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=Border}}" Value="warn"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <StackPanel>
+            <!-- ===== Resumo ===== -->
+            <Border Style="{StaticResource Hero}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <Button Style="{StaticResource Btn.Primary}" Command="{Binding RunPresetCommand}" CommandParameter="{Binding QuickPreset}"
+                                IsEnabled="{Binding IsRunning, Converter={StaticResource Not}}" ToolTip="{Binding QuickPreset.Description}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" Style="{StaticResource T.Icon}" FontSize="13" Foreground="White" Margin="0,0,8,0" />
+                                <TextBlock Text="Teste rápido (CPU e memória)" />
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Style="{StaticResource T.Caption}" HorizontalAlignment="Center" Margin="0,6,0,0">
+                            <Run Text="{Binding QuickPreset.CountText, Mode=OneWay}" /><Run Text=" · perfil leve" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding QuickPreset.EstimateText}" Style="{StaticResource T.Caption}" HorizontalAlignment="Center"
+                                   Visibility="{Binding QuickPreset.EstimateText, Converter={StaticResource Vis}}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <Border Style="{StaticResource LevelChip}" Tag="{Binding HeroLevel}">
+                            <TextBlock Text="{Binding HeroChipText}" Style="{StaticResource LevelChipText}" />
+                        </Border>
+                        <TextBlock Text="Meça o desempenho antes e depois de mudar algo" Style="{StaticResource T.H1}" FontSize="20" Margin="0,8,0,0" TextWrapping="Wrap" TextTrimming="None" />
+                        <TextBlock Text="{Binding HeroText}" Style="{StaticResource T.Lead}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ===== Em execução ===== -->
+            <Border Style="{StaticResource Callout}" Margin="0,0,12,12" Padding="16,12" Visibility="{Binding IsRunning, Converter={StaticResource Vis}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Cancelar" Style="{StaticResource Btn.Danger}" Command="{Binding CancelCommand}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                    <StackPanel>
+                        <TextBlock Text="Testando… deixe o PC quieto até terminar" Style="{StaticResource T.H3}" />
+                        <TextBlock Text="{Binding RunStatus}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,8" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Total" Style="{StaticResource T.Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ProgressBar Grid.Column="1" Maximum="1" Value="{Binding OverallProgress, Mode=OneWay}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="Teste atual" Style="{StaticResource T.Caption}" VerticalAlignment="Center" Margin="16,0,8,0" />
+                            <ProgressBar Grid.Column="3" Maximum="1" Value="{Binding CurrentProgress, Mode=OneWay}" VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ===== Sugestões ===== -->
+            <TextBlock Text="Testes sugeridos" Style="{StaticResource T.Section}" />
+            <ItemsControl ItemsSource="{Binding Presets}" IsEnabled="{Binding IsRunning, Converter={StaticResource Not}}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:BenchPreset}">
+                        <Button Style="{StaticResource Btn.Tile}" Margin="0,0,12,12" VerticalContentAlignment="Top" ToolTip="Marca estes testes e executa (você confirma antes)"
+                                Command="{Binding DataContext.RunPresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Icon}" Style="{StaticResource T.Icon}" FontSize="20" Foreground="{StaticResource B.Cyan}" HorizontalAlignment="Left" />
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                <TextBlock Text="{Binding Description}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,2,0,6" Height="38" />
+                                <TextBlock Style="{StaticResource T.Caption}">
+                                    <Run Text="{Binding CountText, Mode=OneWay}" /><Run Text=" · executar" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding EstimateText}" Style="{StaticResource T.Caption}" Visibility="{Binding EstimateText, Converter={StaticResource Vis}}" />
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ===== Personalizar ===== -->
+            <Border Style="{StaticResource Card}">
+                <Expander IsExpanded="{Binding ShowCustomize}">
+                    <Expander.Header>
+                        <StackPanel>
+                            <TextBlock Text="Personalizar: escolher testes e opções" Style="{StaticResource T.H2}" />
+                            <TextBlock Text="{Binding SelectionSummary}" Style="{StaticResource T.Caption}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Expander.Header>
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="1.5*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+                        <!-- Catálogo -->
+                        <StackPanel Margin="0,0,16,0">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="Desmarcar tudo" Command="{Binding ClearSelectionCommand}" Padding="10,5" FontSize="12"
+                                        IsEnabled="{Binding IsRunning, Converter={StaticResource Not}}" />
+                                <TextBlock Text="Resultados em unidades reais (MB/s, ns, µs…), sem pontuações inventadas. Compare sempre a mesma máquina, antes × depois."
+                                           Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,0,12,0" />
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Groups}" Margin="0,6,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:BenchGroup}">
+                                        <StackPanel Margin="0,8,0,4">
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource Btn.Ghost}" Content="Marcar/desmarcar grupo" Padding="8,3" FontSize="11.5"
+                                                        Command="{Binding DataContext.SelectGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                                        IsEnabled="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Not}}" />
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource T.H3}" Foreground="{StaticResource B.Cyan}" VerticalAlignment="Center" ToolTip="{Binding Description}" />
+                                            </DockPanel>
+                                            <ItemsControl ItemsSource="{Binding Items}" Margin="0,6,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:BenchItem}">
+                                                        <Border Style="{StaticResource CardInner}" Margin="0,0,0,6" Padding="10,8">
+                                                            <StackPanel>
+                                                                <DockPanel>
+                                                                    <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                                              Visibility="{Binding IsImplemented, Converter={StaticResource Vis}}"
+                                                                              IsEnabled="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Not}}" />
+                                                                    <Border DockPanel.Dock="Right" Style="{StaticResource Pill}" Margin="8,0,0,0" ToolTip="{Binding Direction}">
+                                                                        <TextBlock Text="{Binding Unit}" Style="{StaticResource T.Caption}" />
+                                                                    </Border>
+                                                                    <Border DockPanel.Dock="Right" Style="{StaticResource Chip.Warn}" Margin="8,0,0,0"
+                                                                            Visibility="{Binding WritesToStorage, Converter={StaticResource Vis}}">
+                                                                        <TextBlock Text="pode gravar no disco" Style="{StaticResource T.Caption}" Foreground="{StaticResource B.Warning}" />
+                                                                    </Border>
+                                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource T.Base}" FontWeight="SemiBold" VerticalAlignment="Center" ToolTip="{Binding Id}" />
+                                                                </DockPanel>
+                                                                <!-- GPU: não implementado -->
+                                                                <StackPanel Visibility="{Binding IsImplemented, Converter={StaticResource VisInv}}" Margin="0,8,0,0">
+                                                                    <TextBlock Text="{Binding Methodology}" Style="{StaticResource T.WrapMuted}" FontSize="12" />
+                                                                    <Button Content="Abrir Jogos e FPS (medição em jogos reais)" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="10,5" FontSize="12"
+                                                                            Command="{Binding DataContext.GoGamingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                                </StackPanel>
+                                                                <Expander Margin="0,4,0,0" Visibility="{Binding IsImplemented, Converter={StaticResource Vis}}">
+                                                                    <Expander.Header><TextBlock Text="Como é medido" Style="{StaticResource T.Caption}" /></Expander.Header>
+                                                                    <StackPanel>
+                                                                        <TextBlock Style="{StaticResource T.Caption}"><Run Text="{Binding Id, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Direction, Mode=OneWay}" /></TextBlock>
+                                                                        <TextBlock Text="{Binding Methodology}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,0" />
+                                                                        <TextBlock Text="{Binding Secondary}" Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,4,0,0"
+                                                                                   Visibility="{Binding Secondary, Converter={StaticResource Vis}}" />
+                                                                    </StackPanel>
+                                                                </Expander>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="{Binding Description}" Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="2,0,0,0" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Opções e execução -->
+                        <StackPanel Grid.Column="1">
+                            <Border Style="{StaticResource CardInner}" Padding="14">
+                                <StackPanel IsEnabled="{Binding IsRunning, Converter={StaticResource Not}}">
+                                    <TextBlock Text="Opções" Style="{StaticResource T.H3}" />
+                                    <TextBlock Text="INTENSIDADE" Style="{StaticResource T.Overline}" Margin="0,12,0,4" />
+                                    <Border Background="{StaticResource B.Surface}" BorderBrush="{StaticResource B.Border}" BorderThickness="1" CornerRadius="8" Padding="3" HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Style="{StaticResource Segment}" GroupName="bprof" Content="Leve" IsChecked="{Binding LightProfile}" />
+                                            <RadioButton Style="{StaticResource Segment}" GroupName="bprof" Content="Padrão" IsChecked="{Binding LightProfile, Converter={StaticResource Not}}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,4,0,0"
+                                               Text="Leve: metade do trabalho e arquivo de 256 MiB no disco. Só compare resultados feitos com a mesma intensidade." />
+
+                                    <TextBlock Text="REPETIÇÕES" Style="{StaticResource T.Overline}" Margin="0,12,0,4" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <ComboBox Width="90" ItemsSource="{Binding IterationChoices}" SelectedItem="{Binding Iterations}" />
+                                        <TextBlock Text="+ 1 de aquecimento (descartada). Mais repetições = resultado mais confiável." Style="{StaticResource T.Caption}" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" MaxWidth="220" />
+                                    </StackPanel>
+
+                                    <TextBlock Text="DISCO A TESTAR" Style="{StaticResource T.Overline}" Margin="0,12,0,4" />
+                                    <ComboBox ItemsSource="{Binding Volumes}" SelectedItem="{Binding SelectedVolume}" DisplayMemberPath="Label" />
+
+                                    <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding IncludeWriteTests}" Margin="0,12,0,0">
+                                        <TextBlock Text="Incluir testes de gravação no disco" Style="{StaticResource T.Base}" />
+                                    </ToggleButton>
+                                    <Border Style="{StaticResource Callout.Warn}" Margin="0,8,0,0" Visibility="{Binding IncludeWriteTests, Converter={StaticResource Vis}}">
+                                        <TextBlock Text="{Binding StorageWearWarning}" Style="{StaticResource T.Wrap}" FontSize="12" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource CardInner}" Padding="14" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelectionSummary}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,0,0,10" />
+                                    <Button Style="{StaticResource Btn.Primary}" Command="{Binding RunCommand}" IsEnabled="{Binding IsRunning, Converter={StaticResource Not}}" HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE768;" Style="{StaticResource T.Icon}" FontSize="12" Foreground="White" Margin="0,0,8,0" />
+                                            <TextBlock Text="Executar os marcados" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Expander Style="{StaticResource Tech}">
+                                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="11.5"
+                                                   Text="Os testes rodam um por vez em threads dedicadas (fora da interface). Ao cancelar, o teste em andamento é descartado — nunca exibimos números parciais. Condições (plano de energia, carga de fundo, timer, versão do Windows/.NET) são registradas em cada resultado." />
+                                    </Expander>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Expander>
+            </Border>
+
+            <!-- ===== Resultados ===== -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="{Binding ResultsTitle}" Style="{StaticResource T.H2}" />
+                    <StackPanel Margin="0,8,0,8" Visibility="{Binding Results.Count, Converter={StaticResource VisInv}}">
+                        <TextBlock Text="&#xE9D9;" Style="{StaticResource EmptyIcon}" />
+                        <TextBlock Text="Nenhum resultado para mostrar" Style="{StaticResource T.H3}" HorizontalAlignment="Center" />
+                        <TextBlock Text="Rode um teste sugerido acima ou clique em uma execução salva no histórico." Style="{StaticResource T.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Results}" Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" VerticalAlignment="Top" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:BenchResultCard}">
+                                <Border Style="{StaticResource CardInner}" Margin="0,0,10,10" VerticalAlignment="Top">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Right" Style="{StaticResource Pill}">
+                                                <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" Foreground="{Binding StatusBrush, Converter={StaticResource BK}}" />
+                                            </Border>
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource T.H3}" ToolTip="{Binding Id}" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                        <StackPanel Visibility="{Binding IsCompleted, Converter={StaticResource Vis}}">
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <TextBlock Text="{Binding Mean}" Style="{StaticResource T.Metric}" Foreground="{StaticResource B.Cyan}" />
+                                                <TextBlock Text="{Binding Unit}" Style="{StaticResource T.Muted}" VerticalAlignment="Bottom" Margin="6,0,0,5" />
+                                                <TextBlock Text="{Binding Direction, StringFormat=média · {0}}" Style="{StaticResource T.Caption}" VerticalAlignment="Bottom" Margin="10,0,0,6" />
+                                            </StackPanel>
+                                            <ItemsControl ItemsSource="{Binding Metrics}" Margin="0,6,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:BenchMetricRow}">
+                                                        <Grid Margin="0,2">
+                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.3*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Name}" Style="{StaticResource T.Muted}" FontSize="12" ToolTip="{Binding Detail}" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding Mean}" Style="{StaticResource T.Base}" FontSize="12" ToolTip="{Binding Detail}" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <Border Style="{StaticResource Callout.Warn}" Margin="0,8,0,0" Padding="10,7" Visibility="{Binding Unstable, Converter={StaticResource Vis}}">
+                                            <TextBlock Text="O PC estava ocupado com outras coisas ou os resultados variaram muito entre as repetições. Repita com o PC mais quieto antes de tirar conclusões." Style="{StaticResource T.Wrap}" FontSize="11.5" />
+                                        </Border>
+                                        <ItemsControl ItemsSource="{Binding Warnings}" ItemTemplate="{StaticResource BulletItem}" Margin="0,6,0,0" />
+                                        <TextBlock Text="{Binding Message}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,6,0,0" Visibility="{Binding Message, Converter={StaticResource Vis}}" />
+                                        <Expander Style="{StaticResource Tech}" Margin="0,8,0,0">
+                                            <StackPanel>
+                                                <UniformGrid Columns="3">
+                                                    <StackPanel><TextBlock Text="MEDIANA" Style="{StaticResource T.Overline}" /><TextBlock Text="{Binding Median}" Style="{StaticResource T.H3}" /></StackPanel>
+                                                    <StackPanel ToolTip="Coeficiente de variação: quanto as repetições diferem entre si (menor = mais estável)"><TextBlock Text="VARIAÇÃO (CV)" Style="{StaticResource T.Overline}" /><TextBlock Text="{Binding Cv}" Style="{StaticResource T.H3}" /></StackPanel>
+                                                    <StackPanel><TextBlock Text="IC 95% DA MÉDIA" Style="{StaticResource T.Overline}" /><TextBlock Text="{Binding Ci}" Style="{StaticResource T.H3}" /></StackPanel>
+                                                </UniformGrid>
+                                                <TextBlock Text="{Binding Samples, StringFormat=Amostras: {0}}" Style="{StaticResource T.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                                <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="11" Margin="0,6,0,0">
+                                                    <Run Text="Duração" /> <Run Text="{Binding Duration, Mode=OneWay}" /><Run Text=" · Condições: " /><Run Text="{Binding Conditions, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="1.3*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <!-- ===== Comparação ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Comparar antes × depois" Style="{StaticResource T.H2}" />
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,10"
+                                   Text="Escolha duas execuções do mesmo teste. O RBM só diz que melhorou ou piorou quando a diferença é grande o bastante para não ser só variação normal." />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,8,0">
+                                <TextBlock Text="ANTES" Style="{StaticResource T.Overline}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding History}" SelectedItem="{Binding BeforeItem}" DisplayMemberPath="Display" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                <TextBlock Text="DEPOIS (MESMO TESTE)" Style="{StaticResource T.Overline}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AfterChoices}" SelectedItem="{Binding AfterItem}" DisplayMemberPath="Short" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Style="{StaticResource Btn.Primary}" Content="Comparar" VerticalAlignment="Bottom" Command="{Binding CompareCommand}" />
+                        </Grid>
+                        <TextBlock Text="É preciso ter ao menos duas execuções salvas do mesmo teste." Style="{StaticResource T.Caption}" Margin="0,6,0,0"
+                                   Visibility="{Binding AfterChoices.Count, Converter={StaticResource VisInv}}" />
+                        <StackPanel Margin="0,14,0,0" Visibility="{Binding HasComparison, Converter={StaticResource Vis}}">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Left" Width="5" CornerRadius="2" Background="{Binding CompareBrush, Converter={StaticResource BK}}" Margin="0,0,12,0" />
+                                <StackPanel>
+                                    <TextBlock Text="{Binding CompareHeadline}" Style="{StaticResource T.H2}" Foreground="{Binding CompareBrush, Converter={StaticResource BK}}" />
+                                    <TextBlock Text="{Binding CompareVerdict}" Style="{StaticResource T.Wrap}" FontSize="12.5" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </DockPanel>
+                            <DataGrid ItemsSource="{Binding CompareRows}" Margin="0,10,0,0" Visibility="{Binding CompareRows.Count, Converter={StaticResource Vis}}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Medida" Binding="{Binding Name}" Width="1.5*" />
+                                    <DataGridTextColumn Header="Antes" Binding="{Binding Before}" Width="*" />
+                                    <DataGridTextColumn Header="Depois" Binding="{Binding After}" Width="*" />
+                                    <DataGridTemplateColumn Header="Diferença" Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Delta}" FontWeight="SemiBold" Foreground="{Binding Brush, Converter={StaticResource BK}}" ToolTip="{Binding Verdict}" /></DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Binding="{Binding PValue}" Width="70">
+                                        <DataGridTextColumn.Header><TextBlock Text="p" ToolTip="Valor-p do teste t de Welch: abaixo de 0,05 indica diferença real" /></DataGridTextColumn.Header>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <TextBlock Text="Por que os resultados podem não ser comparáveis" Style="{StaticResource T.H3}" Margin="0,10,0,0" Visibility="{Binding CompareWarnings.Count, Converter={StaticResource Vis}}" />
+                            <ItemsControl ItemsSource="{Binding CompareWarnings}" ItemTemplate="{StaticResource BulletItem}" />
+                        </StackPanel>
+                        <Expander Style="{StaticResource Tech}">
+                            <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="11.5"
+                                       Text="Teste t de Welch: só declara mudança se p &lt; 0,05 E a diferença for ≥ 2%. Pequenas flutuações nunca são apresentadas como ganho. A execução mais antiga é sempre tratada como &quot;antes&quot;." />
+                        </Expander>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Histórico ===== -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top">
+                            <TextBlock Text="Histórico" Style="{StaticResource T.H2}" />
+                            <TextBlock Text="Execuções concluídas, salvas neste PC. Clique para ver o resultado completo." Style="{StaticResource T.Caption}" Margin="0,2,0,8" />
+                            <StackPanel Margin="0,8" Visibility="{Binding History.Count, Converter={StaticResource VisInv}}">
+                                <TextBlock Text="&#xE81C;" Style="{StaticResource EmptyIcon}" />
+                                <TextBlock Text="Nenhuma execução salva" Style="{StaticResource T.H3}" HorizontalAlignment="Center" />
+                                <TextBlock Text="Os resultados aparecem aqui depois do primeiro teste." Style="{StaticResource T.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <ListBox ItemsSource="{Binding History}" SelectedItem="{Binding SelectedHistory}" MaxHeight="360">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:BenchHistoryItem}">
+                                    <Border Style="{StaticResource CardInner}" Padding="10,6">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource Btn.Icon}" Content="&#xE74D;" ToolTip="Excluir do histórico"
+                                                    Command="{Binding DataContext.DeleteHistoryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                            <TextBlock Text="{Binding Display}" Style="{StaticResource T.Base}" FontSize="12" VerticalAlignment="Center" ToolTip="{Binding Display}" />
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- ===== Escalonamento MT/ST (só quando há dados) ===== -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding Scaling.Count, Converter={StaticResource Vis}}">
+                <StackPanel>
+                    <TextBlock Text="Quanto o processador ganha usando todos os núcleos" Style="{StaticResource T.H2}" />
+                    <TextBlock Text="{Binding ScalingNote}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,8" />
+                    <DataGrid ItemsSource="{Binding Scaling}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Carga" Binding="{Binding Workload}" Width="1.4*" />
+                            <DataGridTextColumn Header="1 núcleo (ST)" Binding="{Binding St}" Width="*" />
+                            <DataGridTextColumn Header="Todos (MT)" Binding="{Binding Mt}" Width="*" />
+                            <DataGridTextColumn Header="Ganho" Binding="{Binding Ratio}" Width="90" />
+                            <DataGridTextColumn Header="Eficiência" Binding="{Binding Efficiency}" Width="90" />
+                            <DataGridTextColumn Header="Threads" Binding="{Binding Threads}" Width="80" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "network.mmcss.throttlingindex",
+      "name": { "pt": "NetworkThrottlingIndex (limitação de rede do MMCSS)", "en": "Network throttling index" },
+      "category": "Rede",
+      "subcategory": "MMCSS",
+      "technicalDescription": "Valor NetworkThrottlingIndex (DWORD) em HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile. Padrão 10: enquanto há reprodução multimídia registrada no MMCSS, o processamento de pacotes recebidos não multimídia é limitado (~10 mil pacotes/s). 0xFFFFFFFF (4294967295) desativa a limitação.",
+      "plainExplanation": "Ajuste famoso para 'reduzir ping'. Ele só limita a rede enquanto algo multimídia está tocando e só a partir de taxas altas (~15 Mbps de pacotes grandes). Medições mostram que desligar aumenta a latência de DPC do driver de rede, não reduz.",
+      "evidence": "Pesquisa com xperf/iperf (djdallmann, Windows 10 1909) mostrou latência de DPC do NDIS.sys notavelmente maior com o recurso desativado. Benefício só para vazão alta durante reprodução multimídia. Não reduz ping de jogos online (dezenas de pacotes/s). Placebo/contraproducente para latência.",
+      "references": [
+        "https://djdallmann.github.io/GamingPCSetup/CONTENT/RESEARCH/NETWORK",
+        "https://learn.microsoft.com/en-us/windows/win32/procthread/multimedia-class-scheduler-service"
+      ],
+      "grade": "D",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Maior latência de DPC do driver de rede segundo medições; possível aumento de uso de CPU com tráfego alto.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "10 (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "name": "NetworkThrottlingIndex", "kind": "DWord", "value": "10" } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado (0xFFFFFFFF)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile", "name": "NetworkThrottlingIndex", "kind": "DWord", "value": "4294967295" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["network", "mmcss", "myth", "latency"],
+      "benchmarkProcedure": "xperf/WPR com captura de DPC/ISR (NDIS.sys) durante iperf3 a 900 Mbps com áudio tocando; ping/jitter para servidor de jogo; 3 execuções por valor.",
+      "origin": "Guias de 'gaming network tweaks' (SpeedGuide/TCP Optimizer, YouTube)."
+    },
+    {
+      "id": "network.qos.nonbesteffortlimit",
+      "name": { "pt": "Largura de banda reservável do QoS ('os 20%')", "en": "QoS limit reservable bandwidth" },
+      "category": "Rede",
+      "subcategory": "QoS",
+      "technicalDescription": "Política NonBestEffortLimit (DWORD, %) em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Psched. Define o MÁXIMO que aplicações QoS podem reservar; não é largura de banda retida. Ausente = 20% como teto de reserva.",
+      "plainExplanation": "O mito diz que o Windows 'rouba 20% da sua internet'. Falso: é só o limite máximo que programas especiais podem reservar, e quase nenhum programa reserva nada. Zerar não aumenta a velocidade.",
+      "evidence": "Raymond Chen (Microsoft) classificou como 'placebo setting': o valor é um teto e banda não usada fica disponível para todo o tráfego. Desmentido também por publicações técnicas desde 2001–2006.",
+      "references": [
+        "https://devblogs.microsoft.com/oldnewthing/20061123-14/?p=28923",
+        "https://tweaks.com/windows/37125/qos-myth/",
+        "https://helpdeskgeek.com/windows-11/what-is-limit-reservable-bandwidth-in-windows-and-why-you-shouldnt-change-it/"
+      ],
+      "grade": "D",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Aplicações que dependem de reserva QoS (raras; algumas de streaming/VoIP corporativo) podem sofrer interrupções com 0%.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Psched", "name": "NonBestEffortLimit", "kind": "DWord", "value": null } ]
+        },
+        {
+          "key": "zero",
+          "label": "0% (mito popular)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Psched", "name": "NonBestEffortLimit", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["network", "qos", "myth"],
+      "benchmarkProcedure": "Speedtest/iperf3 3 vezes por estado; esperado: nenhuma diferença.",
+      "origin": "Boato da era Windows XP (2001), repetido até hoje."
+    },
+    {
+      "id": "network.deliveryoptimization",
+      "name": { "pt": "Otimização de Entrega (compartilhamento P2P de atualizações)", "en": "Delivery Optimization download mode" },
+      "category": "Rede",
+      "subcategory": "Windows Update",
+      "technicalDescription": "Política DODownloadMode (DWORD) em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization: 0 = somente servidores da Microsoft/CDN (sem P2P), 1 = P2P apenas na rede local (padrão do sistema), 2 = grupo, 3 = Internet. As atualizações continuam sendo baixadas normalmente.",
+      "plainExplanation": "Define se o seu PC compartilha pedaços de atualizações com outros PCs. Limitar ao modo 'somente Microsoft' evita uploads em segundo plano em conexões lentas, sem impedir atualizações de segurança.",
+      "evidence": "Comportamento documentado pela Microsoft (referência do Delivery Optimization). O DO já limita banda em segundo plano; o benefício de desativar P2P é relevante em conexões com upload fraco ou franquia de dados. Atualizações não são afetadas.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/deployment/do/waas-delivery-optimization-reference",
+        "https://learn.microsoft.com/en-us/windows/win32/delivery_optimization/do-enumerations"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Em redes com vários PCs, atualizações podem consumir mais banda de Internet (cada PC baixa da Microsoft).",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão do sistema)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization", "name": "DODownloadMode", "kind": "DWord", "value": null } ]
+        },
+        {
+          "key": "lan",
+          "label": "P2P só na rede local (1)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization", "name": "DODownloadMode", "kind": "DWord", "value": "1" } ]
+        },
+        {
+          "key": "cdn-only",
+          "label": "Somente servidores Microsoft (0)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization", "name": "DODownloadMode", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["network", "windows-update", "upload", "bandwidth"],
+      "benchmarkProcedure": "Monitor de Atividade da Otimização de Entrega (Configurações > Windows Update > Opções avançadas) após uma atualização mensal: comparar bytes enviados.",
+      "origin": "Configuração oficial (Configurações > Windows Update > Otimização de Entrega)."
+    },
+    {
+      "id": "network.wifi.powersaving",
+      "name": { "pt": "Economia de energia do adaptador Wi‑Fi", "en": "Wireless adapter power saving mode" },
+      "category": "Rede",
+      "subcategory": "Wi‑Fi",
+      "technicalDescription": "Altera 'Modo de economia de energia' (GUID 12bbebe6-58d6-4636-95bb-3217ef867c1a, subgrupo 19cbb8fa-5279-450e-9fac-8a3d5fedd0c1) no esquema ativo: 0 = Desempenho máximo, 1 = Economia baixa, 2 = Economia média, 3 = Economia máxima. Na bateria, a economia ativa o modo de economia 802.11 (PSM).",
+      "plainExplanation": "Na bateria, o Wi‑Fi 'cochila' entre pacotes para economizar energia, o que pode gerar picos de ping. Na tomada o padrão já é desempenho máximo.",
+      "evidence": "Comportamento documentado pela Microsoft (KB 928152): na bateria, Economia média ativa o power save 802.11; a solução documentada é usar Desempenho máximo na bateria, ao custo de autonomia. A Intel alerta que mudar o padrão pode causar problemas de conectividade em alguns adaptadores e que Baixa/Média se comportam igual em seus adaptadores.",
+      "references": [
+        "https://support.microsoft.com/kb/928152",
+        "https://intel.com/content/www/us/en/support/articles/000046272/wireless/legacy-intel-wireless-products.html",
+        "https://www.thewindowsclub.com/change-wireless-adapter-power-saving-mode-using-powercfg"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Menor autonomia da bateria. Drivers podem ignorar a configuração.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "formFactor": "Laptop", "notes": "Relevante apenas na bateria; em desktops o valor na tomada já é Desempenho máximo." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (máximo desempenho na tomada / economia média na bateria)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "19cbb8fa-5279-450e-9fac-8a3d5fedd0c1", "setting": "12bbebe6-58d6-4636-95bb-3217ef867c1a", "ac": 0, "dc": 2, "friendlyName": "Modo de economia de energia do adaptador sem fio" }
+          ]
+        },
+        {
+          "key": "max-performance",
+          "label": "Desempenho máximo também na bateria",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "19cbb8fa-5279-450e-9fac-8a3d5fedd0c1", "setting": "12bbebe6-58d6-4636-95bb-3217ef867c1a", "ac": 0, "dc": 0, "friendlyName": "Modo de economia de energia do adaptador sem fio" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["network", "wifi", "laptop", "latency", "battery"],
+      "benchmarkProcedure": "Na bateria: ping 1000 pacotes para o gateway e para servidor de jogo (média, desvio, máximo) com cada opção; consumo por 30 min.",
+      "origin": "Artigo de suporte da Microsoft (KB 928152) e guias de jogos em notebook."
+    }
+  ]
+}

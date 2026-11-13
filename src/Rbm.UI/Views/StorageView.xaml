@@ -1,0 +1,202 @@
+<UserControl x:Class="Rbm.UI.Views.StorageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Rbm.UI.Controls"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels"
+             xmlns:hw="clr-namespace:Rbm.UI.Pages.Hardware">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/RBMOptimizer;component/Pages/Hardware/HwResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <StackPanel>
+            <!-- ===== Resumo ===== -->
+            <Border Style="{StaticResource Hero}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <Button Content="Liberar espaço" Style="{StaticResource Hw.HeroPrimary}" Command="{x:Static hw:HwNav.Go}" CommandParameter="cleanup"
+                                ToolTip="Limpeza de temporários, caches e lixeira, com prévia antes de apagar." />
+                        <Button Content="Ver o que ocupa espaço" Style="{StaticResource Hw.HeroButton}" Command="{x:Static hw:HwNav.Go}" CommandParameter="space"
+                                ToolTip="Mapa das pastas e arquivos maiores." />
+                        <Button Content="Atualizar" Style="{StaticResource Hw.HeroButton}" Command="{Binding RefreshCommand}"
+                                ToolTip="Relê os discos, o espaço livre e o estado do TRIM." />
+                    </StackPanel>
+                    <ContentControl Content="{Binding Hero}" Focusable="False" />
+                </DockPanel>
+            </Border>
+
+            <UniformGrid Columns="4">
+                <ContentControl Content="{Binding SpaceFact}" Focusable="False" />
+                <ContentControl Content="{Binding HealthFact}" Focusable="False" />
+                <ContentControl Content="{Binding ActivityFact}" Focusable="False" />
+                <ContentControl Content="{Binding TrimFact}" Focusable="False" />
+            </UniformGrid>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <!-- ===== Volumes ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Espaço nas unidades" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Barra amarela: menos de 20% livre. Vermelha: menos de 10%." Style="{StaticResource T.Lead}" FontSize="12.5" Margin="0,0,0,10" />
+                        <TextBlock Text="Lendo unidades…" Style="{StaticResource T.Muted}" Visibility="{Binding HasVolumes, Converter={StaticResource VisInv}}" />
+                        <ItemsControl ItemsSource="{Binding Volumes}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:VolumeRow}">
+                                    <StackPanel Margin="0,0,0,14">
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource T.H3}" FontSize="13.5" />
+                                        <ProgressBar Maximum="100" Value="{Binding UsedPct, Mode=OneWay}" Foreground="{Binding Bar}" Height="8" Margin="0,6,0,5" />
+                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource T.Muted}" FontSize="12" TextWrapping="Wrap" TextTrimming="None" />
+                                        <TextBlock Text="{Binding Warning}" Style="{StaticResource T.Wrap}" Foreground="{StaticResource B.Warning}" FontSize="12" Margin="0,3,0,0"
+                                                   Visibility="{Binding Warning, Converter={StaticResource Vis}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <!-- ===== Discos ===== -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Seus discos" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Saúde segundo o próprio Windows." Style="{StaticResource T.Lead}" FontSize="12.5" Margin="0,0,0,10" />
+                        <TextBlock Text="{Binding DiskStatus}" Style="{StaticResource T.Muted}" Visibility="{Binding Disks.Count, Converter={StaticResource VisInv}}" TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding Disks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:DiskRow}">
+                                    <Border Style="{StaticResource CardInner}" Margin="0,0,0,8" Padding="12,10">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="{StaticResource B.Surface3}" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="7" Height="7" Fill="{Binding HealthBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Health}" Foreground="{Binding HealthBrush}" FontSize="12" FontWeight="SemiBold" />
+                                                </StackPanel>
+                                            </Border>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Model}" Style="{StaticResource T.H3}" FontSize="13.5" />
+                                                <TextBlock Style="{StaticResource T.Muted}" FontSize="12" Margin="0,2,0,0">
+                                                    <Run Text="{Binding Kind, Mode=OneWay}" /><Run Text="{Binding SystemNote, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,0"
+                                   Text="Contadores detalhados de desgaste (SMART/NVMe: vida útil restante, horas ligadas, setores com defeito) ainda não são lidos por esta versão — por isso não aparecem, em vez de serem estimados." />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ===== E/S ao vivo ===== -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding DiskOptions}" SelectedItem="{Binding SelectedDisk}" DisplayMemberPath="Label" MinWidth="300" MaxWidth="480"
+                                  VerticalAlignment="Top" Visibility="{Binding HasLiveDisks, Converter={StaticResource Vis}}" />
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Atividade do disco agora" Style="{StaticResource T.H2}" />
+                            <TextBlock Text="Quanto o disco está ocupado, a velocidade de leitura/gravação e o tempo de resposta." Style="{StaticResource T.Lead}" FontSize="12.5" />
+                        </StackPanel>
+                    </DockPanel>
+                    <TextBlock Text="Contadores de disco ainda não disponíveis (aguardando amostras ou contador PhysicalDisk desativado)." Style="{StaticResource T.Muted}" Margin="0,10,0,0"
+                               Visibility="{Binding HasLiveDisks, Converter={StaticResource VisInv}}" />
+                    <Grid Margin="0,8,0,0" Visibility="{Binding HasLiveDisks, Converter={StaticResource Vis}}">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,14,0">
+                            <TextBlock Text="Ocupado (%)" Style="{StaticResource T.H3}" ToolTip="Tempo ativo: 100 − % Idle Time. Perto de 100% de forma contínua = o disco é o gargalo." />
+                            <ItemsControl ItemsSource="{Binding ActiveLegend}" Style="{StaticResource Hw.LegendList}" />
+                            <c:LineChart Height="130" Series="{Binding ActiveChart}" Maximum="100" Unit="%" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                            <TextBlock Text="Velocidade (MB/s)" Style="{StaticResource T.H3}" />
+                            <ItemsControl ItemsSource="{Binding RateLegend}" Style="{StaticResource Hw.LegendList}" />
+                            <c:LineChart Height="130" Series="{Binding RateChart}" LabelFormat="0.#" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Tempo de resposta (ms)" Style="{StaticResource T.H3}" ToolTip="Latência média. Referência: NVMe abaixo de 1 ms, SSD SATA poucos ms, HD 5–20 ms." />
+                            <ItemsControl ItemsSource="{Binding LatencyLegend}" Style="{StaticResource Hw.LegendList}" />
+                            <c:LineChart Height="130" Series="{Binding LatencyChart}" LabelFormat="0.##" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="1.4*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <!-- ===== Processos de E/S ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Programas que mais usam o disco" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="{Binding ProcStatus}" Style="{StaticResource T.Muted}" FontSize="12" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
+                        <DataGrid ItemsSource="{Binding TopIo}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Programa" Binding="{Binding Name}" Width="*" />
+                                <DataGridTextColumn Header="Leitura" Binding="{Binding IoReadText}" SortMemberPath="IoReadSort" Width="100" />
+                                <DataGridTextColumn Header="Gravação" Binding="{Binding IoWriteText}" SortMemberPath="IoWriteSort" Width="100" />
+                                <DataGridTextColumn Header="Total" Binding="{Binding IoTotalText}" SortMemberPath="IoTotalSort" Width="100" />
+                                <DataGridTextColumn Header="CPU" Binding="{Binding CpuText}" SortMemberPath="CpuSort" Width="60" />
+                                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="60" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+                <!-- ===== TRIM / otimização ===== -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Manutenção automática" Style="{StaticResource T.H2}" />
+                        <TextBlock Style="{StaticResource T.Lead}" FontSize="12.5" Margin="0,0,0,10"
+                                   Text="O Windows já cuida disso sozinho: em SSDs envia TRIM; só HDs são desfragmentados. A otimização semanal vem ativada por padrão. O RBM nunca desfragmenta SSDs." />
+                        <Border Style="{StaticResource CardInner}" Margin="0,0,0,10">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding TrimNtfs}" Style="{StaticResource T.H3}" Foreground="{Binding TrimBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="TRIM (unidades NTFS)" Style="{StaticResource T.Base}" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </Border>
+                        <Button Content="Abrir &quot;Otimizar unidades&quot; do Windows" Command="{Binding OpenOptimizeCommand}" Style="{StaticResource Hw.SmallButton}" HorizontalAlignment="Left"
+                                ToolTip="Abre o utilitário do Windows (dfrgui.exe) para ver o status e o agendamento." />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ===== Detalhes técnicos ===== -->
+            <Border Style="{StaticResource Card}">
+                <Expander Style="{StaticResource TechDetails}" Margin="0">
+                    <StackPanel Margin="0,4,0,0">
+                        <TextBlock Text="{Binding DiskStatus}" Style="{StaticResource T.Muted}" FontSize="12" />
+                        <DataGrid ItemsSource="{Binding Disks}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Number}" Width="40" />
+                                <DataGridTextColumn Header="Modelo" Binding="{Binding Model}" Width="1.6*" />
+                                <DataGridTextColumn Header="Mídia" Binding="{Binding Media}" Width="80" />
+                                <DataGridTextColumn Header="Barramento" Binding="{Binding Bus}" Width="95" />
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Size" Width="90" />
+                                <DataGridTextColumn Header="Firmware" Binding="{Binding Firmware}" Width="0.8*" />
+                                <DataGridTemplateColumn Header="Saúde" SortMemberPath="Health" Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding Health}" Foreground="{Binding HealthBrush}" FontWeight="SemiBold" FontSize="12.5" /></DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Estado operacional" Binding="{Binding Operational}" Width="0.9*" />
+                                <DataGridTextColumn Header="Sistema" Binding="{Binding SystemText}" Width="70" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="Saúde detalhada (SMART / NVMe)" Style="{StaticResource T.H3}" Margin="0,12,0,4" />
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12"
+                                   Text="A coluna Saúde é o HealthStatus resumido do Windows (MSFT_PhysicalDisk). Contadores detalhados — percentual de vida usado, horas ligadas, setores realocados, erros de mídia, spare disponível — exigem acesso de baixo nível pelo agente elevado (operação storage.health), que ainda não está implementada." />
+                        <TextBlock Text="TRIM" Style="{StaticResource T.H3}" Margin="0,12,0,4" />
+                        <TextBlock Text="fsutil behavior query DisableDeleteNotify" Style="{StaticResource T.Caption}" FontFamily="{StaticResource F.Mono}" FontSize="11.5" />
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,0"><Run Text="NTFS:" /> <Run Text="{Binding TrimNtfs, Mode=OneWay}" /> <Run Text="· ReFS:" /> <Run Text="{Binding TrimRefs, Mode=OneWay}" /></TextBlock>
+                        <TextBlock Text="{Binding TrimDetail}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,0" />
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,8,0,0"
+                                   Text="Desempenho ao vivo: contadores PDH PhysicalDisk (% Idle Time, Disk Read/Write Bytes/sec, Avg. Disk sec/Read e sec/Write, Current Disk Queue Length). Programas: E/S contabilizada por processo (inclui arquivo, rede e dispositivos)." />
+                    </StackPanel>
+                </Expander>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

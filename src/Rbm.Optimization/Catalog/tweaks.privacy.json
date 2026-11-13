@@ -1,0 +1,686 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "privacy.telemetry.level",
+      "name": { "pt": "Nível de dados de diagnóstico (telemetria)", "en": "Diagnostic data level" },
+      "category": "Privacidade",
+      "subcategory": "Telemetria",
+      "technicalDescription": "Política AllowTelemetry (DWORD) em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection: 0 = Segurança (somente Enterprise/Education/Server; em Home/Pro é tratado como 1), 1 = Obrigatório/Básico, 3 = Opcional/Completo. Ausente = escolha do usuário em Configurações.",
+      "plainExplanation": "Limita a quantidade de dados de uso e diagnóstico que o Windows envia à Microsoft ao mínimo permitido pela sua edição. Não é otimização de desempenho.",
+      "evidence": "Política documentada pela Microsoft. O nível 'Segurança' só existe no Enterprise/Education; em Home/Pro o mínimo efetivo é 'Obrigatório'. Efeito de privacidade documentado; efeito de desempenho não demonstrado.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services",
+        "https://stigaview.com/products/win11/v2r7/WN11-CC-000205"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Recursos que dependem de dados opcionais (algumas recomendações, Windows Insider, parte do diagnóstico de problemas) ficam indisponíveis; a página de Configurações mostra 'algumas configurações são gerenciadas pela organização'.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "Windows 11 não usa mais o nível 'Avançado' (2)." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (escolha do usuário)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "AllowTelemetry", "kind": "DWord", "value": null } ]
+        },
+        {
+          "key": "required",
+          "label": "Obrigatório / Básico (1)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "AllowTelemetry", "kind": "DWord", "value": "1" } ]
+        },
+        {
+          "key": "security",
+          "label": "Segurança (0) — somente Enterprise/Education",
+          "notes": "Em Home/Pro o Windows trata 0 como 1.",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "AllowTelemetry", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "required",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "telemetry", "policy"],
+      "benchmarkProcedure": "Verificar em Configurações > Privacidade > Diagnóstico e comentários e com o Visualizador de Dados de Diagnóstico.",
+      "origin": "Política de grupo oficial."
+    },
+    {
+      "id": "privacy.diagtrack.service",
+      "name": { "pt": "Serviço de telemetria (DiagTrack)", "en": "Connected User Experiences and Telemetry service" },
+      "category": "Privacidade",
+      "subcategory": "Telemetria",
+      "technicalDescription": "Tipo de inicialização do serviço DiagTrack ('Experiências do Usuário Conectado e Telemetria'), responsável pelo envio de dados de diagnóstico. Padrão: Automático.",
+      "plainExplanation": "Desativa o serviço que envia os dados de diagnóstico. É um ajuste de privacidade, não de desempenho — o serviço consome pouquíssimo recurso.",
+      "evidence": "Efeito de privacidade direto (o serviço é o canal de envio). Nenhum ganho de desempenho demonstrado. Com 'privacy.telemetry.level' em Obrigatório, o volume já é mínimo; desativar o serviço vai além, com efeitos colaterais.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Programa Windows Insider, relatórios de compatibilidade e parte do diagnóstico de problemas podem deixar de funcionar; atualizações de recursos podem perder avaliações de compatibilidade baseadas em telemetria.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Automático (padrão)",
+          "targets": [ { "type": "service", "serviceName": "DiagTrack", "startMode": "Automatic" } ]
+        },
+        {
+          "key": "manual",
+          "label": "Manual",
+          "targets": [ { "type": "service", "serviceName": "DiagTrack", "startMode": "Manual" } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado",
+          "targets": [ { "type": "service", "serviceName": "DiagTrack", "startMode": "Disabled" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "telemetry", "service"],
+      "benchmarkProcedure": "Não aplicável a desempenho; verificar conexões do serviço com o Monitor de Recursos (aba Rede).",
+      "origin": "O&O ShutUp10++, winutil e guias de privacidade."
+    },
+    {
+      "id": "privacy.advertisingid",
+      "name": { "pt": "ID de publicidade", "en": "Advertising ID" },
+      "category": "Privacidade",
+      "subcategory": "Publicidade",
+      "technicalDescription": "Política DisabledByGroupPolicy (DWORD) = 1 em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo ('Desativar o ID de publicidade'). Desliga o identificador usado por apps para anúncios personalizados para todos os usuários.",
+      "plainExplanation": "Impede que aplicativos usem um identificador de publicidade do Windows para mostrar anúncios personalizados.",
+      "evidence": "Política documentada pela Microsoft; desligar o recurso desativa o ID (não apenas o redefine).",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Anúncios em apps deixam de ser personalizados (continuam aparecendo).",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 15063 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo", "name": "DisabledByGroupPolicy", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "ID de publicidade desativado",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo", "name": "DisabledByGroupPolicy", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "advertising", "policy"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Política de grupo oficial."
+    },
+    {
+      "id": "privacy.tailoredexperiences",
+      "name": { "pt": "Experiências personalizadas com dados de diagnóstico", "en": "Tailored experiences" },
+      "category": "Privacidade",
+      "subcategory": "Publicidade",
+      "technicalDescription": "Política DisableTailoredExperiencesWithDiagnosticData (DWORD) = 1 em HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent. Impede que a Microsoft use dados de diagnóstico para dicas, anúncios e recomendações personalizadas.",
+      "plainExplanation": "Impede que a Microsoft use seus dados de diagnóstico para personalizar dicas e ofertas.",
+      "evidence": "Política documentada pela Microsoft.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Dicas e recomendações deixam de ser personalizadas.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 15063 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableTailoredExperiencesWithDiagnosticData", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativadas",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableTailoredExperiencesWithDiagnosticData", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "personalization", "policy"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Política de grupo oficial."
+    },
+    {
+      "id": "privacy.activityhistory",
+      "name": { "pt": "Histórico de atividades", "en": "Activity history" },
+      "category": "Privacidade",
+      "subcategory": "Histórico",
+      "technicalDescription": "Políticas em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System: EnableActivityFeed=0, PublishUserActivities=0, UploadUserActivities=0. Desativam a coleta, publicação e envio do histórico de atividades.",
+      "plainExplanation": "Impede que o Windows registre e envie à nuvem o histórico de apps e documentos que você usa.",
+      "evidence": "Políticas documentadas pela Microsoft (desativar as três).",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Sem histórico de atividades entre dispositivos.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 17134 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "EnableActivityFeed", "kind": "DWord", "value": null, "equivalents": ["1"] },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "PublishUserActivities", "kind": "DWord", "value": null, "equivalents": ["1"] },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "UploadUserActivities", "kind": "DWord", "value": null, "equivalents": ["1"] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "EnableActivityFeed", "kind": "DWord", "value": "0" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "PublishUserActivities", "kind": "DWord", "value": "0" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "UploadUserActivities", "kind": "DWord", "value": "0" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "activity", "policy"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Política de grupo oficial."
+    },
+    {
+      "id": "privacy.search.web",
+      "name": { "pt": "Resultados da web (Bing) na pesquisa do Windows", "en": "Web (Bing) results in Windows Search" },
+      "category": "Privacidade",
+      "subcategory": "Pesquisa",
+      "technicalDescription": "Política de usuário DisableSearchBoxSuggestions=1 em HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer e BingSearchEnabled=0 em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Search. Visa impedir que o texto digitado no Iniciar seja enviado ao Bing.",
+      "plainExplanation": "Tenta fazer a pesquisa do Iniciar procurar só no seu PC, sem enviar o que você digita para a web. A eficácia varia entre versões do Windows 11.",
+      "evidence": "Valores amplamente documentados por guias; relatos conflitantes sobre eficácia em builds recentes do Windows 11 (alguns relatam que deixou de funcionar). A Microsoft tem adicionado um interruptor oficial em versões novas. Evidência de eficácia inconsistente.",
+      "references": [
+        "https://www.elevenforum.com/t/enable-or-disable-bing-web-suggested-search-results-in-windows-search-on-windows-11.5309/",
+        "https://pureinfotech.com/disable-search-web-results-windows-11/",
+        "https://woshub.com/disable-web-search-windows-start-menu/"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Sem sugestões da web no Iniciar; a caixa de pesquisa do Explorador deixa de mostrar pesquisas recentes.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 19041 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (resultados da web habilitados)",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer", "name": "DisableSearchBoxSuggestions", "kind": "DWord", "value": null, "equivalents": ["0"] },
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "name": "BingSearchEnabled", "kind": "DWord", "value": null, "equivalents": ["1"] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Sem resultados da web",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer", "name": "DisableSearchBoxSuggestions", "kind": "DWord", "value": "1" },
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "name": "BingSearchEnabled", "kind": "DWord", "value": "0" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "search", "bing"],
+      "benchmarkProcedure": "Digitar um termo inexistente no Iniciar e verificar se aparecem resultados da web; conferir conexões de SearchHost.exe no Monitor de Recursos.",
+      "origin": "Guias de privacidade (ElevenForum, Pureinfotech, Woshub)."
+    },
+    {
+      "id": "privacy.feedback.frequency",
+      "name": { "pt": "Frequência de solicitações de comentários", "en": "Feedback frequency" },
+      "category": "Privacidade",
+      "subcategory": "Telemetria",
+      "technicalDescription": "Valores em HKCU\\Software\\Microsoft\\Siuf\\Rules: NumberOfSIUFInPeriod=0 e PeriodInNanoSeconds=0 correspondem a 'Nunca'. Ambos ausentes = 'Automaticamente' (padrão).",
+      "plainExplanation": "Impede que o Windows mostre pesquisas pedindo sua opinião.",
+      "evidence": "Valores documentados pela Microsoft no guia de conexões do Windows.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Nenhum relevante.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Automaticamente (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Siuf\\Rules", "name": "NumberOfSIUFInPeriod", "kind": "DWord", "value": null },
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Siuf\\Rules", "name": "PeriodInNanoSeconds", "kind": "DWord", "value": null }
+          ]
+        },
+        {
+          "key": "never",
+          "label": "Nunca",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Siuf\\Rules", "name": "NumberOfSIUFInPeriod", "kind": "DWord", "value": "0" },
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Siuf\\Rules", "name": "PeriodInNanoSeconds", "kind": "DWord", "value": "0" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "never",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "feedback"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Configurações > Privacidade > Diagnóstico e comentários."
+    },
+    {
+      "id": "privacy.location",
+      "name": { "pt": "Serviço de localização (dispositivo inteiro)", "en": "Location services (device-wide)" },
+      "category": "Privacidade",
+      "subcategory": "Localização",
+      "technicalDescription": "Política DisableLocation (DWORD) = 1 em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors ('Desativar localização').",
+      "plainExplanation": "Desliga a localização para todo o PC. Apps de mapas, clima e o ajuste automático de fuso horário deixam de saber onde você está.",
+      "evidence": "Política documentada pela Microsoft.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Fuso horário automático, Encontrar meu dispositivo, mapas e clima perdem a localização.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors", "name": "DisableLocation", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Localização desativada",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors", "name": "DisableLocation", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "location", "policy"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Política de grupo oficial."
+    },
+    {
+      "id": "privacy.consumerfeatures",
+      "name": { "pt": "Experiências do consumidor da Microsoft", "en": "Microsoft consumer experiences" },
+      "category": "Privacidade",
+      "subcategory": "Conteúdo promovido",
+      "technicalDescription": "Política DisableWindowsConsumerFeatures (DWORD) = 1 em HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent ('Desativar experiências do consumidor da Microsoft'): bloqueia instalação de apps sugeridos e conteúdo promocional.",
+      "plainExplanation": "Bloqueia apps e conteúdos promocionais instalados automaticamente. Funciona plenamente nas edições Enterprise/Education; em Home/Pro use também 'privacy.consumer.silentapps'.",
+      "evidence": "Política documentada pela Microsoft; a aplicação plena é restrita a edições corporativas/educacionais em versões recentes.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Nenhum relevante.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10586, "notes": "Efeito pleno em Enterprise/Education." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Não configurado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableWindowsConsumerFeatures", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativadas",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableWindowsConsumerFeatures", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "bloat", "policy"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Política de grupo oficial."
+    },
+    {
+      "id": "privacy.consumer.silentapps",
+      "name": { "pt": "Instalação automática de apps sugeridos", "en": "Silently installed suggested apps" },
+      "category": "Privacidade",
+      "subcategory": "Conteúdo promovido",
+      "technicalDescription": "Valor SilentInstalledAppsEnabled (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager: 1 = permite instalação silenciosa de apps promovidos (padrão), 0 = bloqueia.",
+      "plainExplanation": "Impede que o Windows instale sozinho apps e jogos promovidos na sua conta.",
+      "evidence": "Valor amplamente documentado pela comunidade (sem documentação oficial por valor); efeito observável em perfis novos. Pode não impedir atalhos promocionais já provisionados.",
+      "references": [
+        "https://www.elevenforum.com/t/how-to-disable-windows-11-promotional-apps-for-all-users.1552/latest",
+        "https://tippsling.de/?p=30752",
+        "https://learn.microsoft.com/en-us/answers/questions/1362346/windows-10-11-promotional-pinned-shortcuts"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Nenhum relevante.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Permitida (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SilentInstalledAppsEnabled", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Bloqueada",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SilentInstalledAppsEnabled", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "bloat", "content-delivery"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "O&O ShutUp10++, winutil."
+    },
+    {
+      "id": "privacy.consumer.startsuggestions",
+      "name": { "pt": "Sugestões de apps no menu Iniciar", "en": "Start menu app suggestions" },
+      "category": "Privacidade",
+      "subcategory": "Conteúdo promovido",
+      "technicalDescription": "Valor SystemPaneSuggestionsEnabled (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager: 1 = mostrar sugestões (padrão), 0 = ocultar.",
+      "plainExplanation": "Remove sugestões de apps (propaganda) do menu Iniciar.",
+      "evidence": "Valor documentado pela comunidade; efeito observável principalmente no Windows 10.",
+      "references": [
+        "https://tippsling.de/?p=30752",
+        "https://www.elevenforum.com/t/how-to-disable-windows-11-promotional-apps-for-all-users.1552/latest"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Nenhum relevante.",
+      "restart": "ExplorerRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Mostrar (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SystemPaneSuggestionsEnabled", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Ocultar",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SystemPaneSuggestionsEnabled", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "bloat", "start-menu"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Configurações > Personalização > Iniciar."
+    },
+    {
+      "id": "privacy.consumer.tips",
+      "name": { "pt": "Dicas e sugestões do Windows", "en": "Windows tips and suggestions" },
+      "category": "Privacidade",
+      "subcategory": "Conteúdo promovido",
+      "technicalDescription": "Valor SubscribedContent-338389Enabled (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager: 1 = mostrar dicas e sugestões ao usar o Windows (padrão), 0 = desativar.",
+      "plainExplanation": "Desliga notificações com dicas, truques e sugestões do Windows.",
+      "evidence": "ID de conteúdo documentado pela comunidade (IDs SubscribedContent são internos da Microsoft).",
+      "references": [
+        "https://tippsling.de/?p=30752",
+        "https://www.elevenforum.com/t/how-to-disable-windows-11-promotional-apps-for-all-users.1552/latest"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Nenhum relevante.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Mostrar (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338389Enabled", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativar",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338389Enabled", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "notifications", "content-delivery"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Configurações > Sistema > Notificações > Dicas e sugestões."
+    },
+    {
+      "id": "privacy.clearpagefile",
+      "name": { "pt": "Limpar arquivo de paginação ao desligar", "en": "Clear virtual memory pagefile at shutdown" },
+      "category": "Privacidade",
+      "subcategory": "Segurança de dados",
+      "technicalDescription": "Valor ClearPageFileAtShutdown (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management (política 'Desligamento: limpar arquivo de paginação de memória virtual'): 1 = sobrescreve o pagefile ao desligar.",
+      "plainExplanation": "Apaga dados que ficaram no arquivo de paginação quando o PC é desligado, protegendo contra quem tirar o disco do computador. Deixa o desligamento bem mais lento e piora desempenho de nada no uso normal. BitLocker protege melhor.",
+      "evidence": "Política de segurança documentada pela Microsoft; documentação antiga cita desligamentos até 30+ minutos mais lentos em configurações grandes. Não protege contra desligamento abrupto. Benefício só em modelos de ameaça específicos.",
+      "references": [
+        "https://technet.microsoft.com/en-us/library/jj852257.aspx",
+        "https://learn.microsoft.com/cs-cz/previous-versions/windows/it-pro/windows-10/security/threat-protection/security-policy-settings/shutdown-clear-virtual-memory-pagefile"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Low",
+      "impact": "Medium",
+      "sideEffects": "Desligamento e reinício muito mais lentos (proporcional ao tamanho do pagefile); incompatível na prática com Inicialização rápida útil.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Desativado (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management", "name": "ClearPageFileAtShutdown", "kind": "DWord", "value": "0", "equivalents": [null] } ]
+        },
+        {
+          "key": "enabled",
+          "label": "Limpar ao desligar",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management", "name": "ClearPageFileAtShutdown", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "security", "pagefile", "shutdown"],
+      "benchmarkProcedure": "Cronometrar desligamento completo (evento 200 de Diagnostics-Performance) 3 vezes por opção.",
+      "origin": "Linhas de base de segurança (CIS/STIG)."
+    },
+    {
+      "id": "privacy.ceip.consolidator",
+      "name": { "pt": "Tarefa do Programa de Aperfeiçoamento (CEIP Consolidator)", "en": "CEIP Consolidator scheduled task" },
+      "category": "Privacidade",
+      "subcategory": "Telemetria",
+      "technicalDescription": "Tarefa agendada \\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator, que agrega e envia dados do Programa de Aperfeiçoamento da Experiência do Usuário.",
+      "plainExplanation": "Desativa uma tarefa antiga de coleta de dados de uso. Grande parte da telemetria moderna passa pelo serviço DiagTrack, então o efeito é limitado.",
+      "evidence": "Tarefa presente e documentada em guias de privacidade; a importância residual no Windows 10/11 é incerta (o CEIP foi substituído em grande parte pela telemetria unificada). Evidência insuficiente sobre o efeito real.",
+      "references": [],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Nenhum conhecido.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "A tarefa pode não existir em builds recentes; nesse caso o item é 'não aplicável'." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Habilitada (padrão)",
+          "targets": [ { "type": "task", "taskPath": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator", "enabled": true } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desabilitada",
+          "targets": [ { "type": "task", "taskPath": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator", "enabled": false } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "telemetry", "task"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "O&O ShutUp10++ e scripts de privacidade."
+    },
+    {
+      "id": "privacy.inking.typing",
+      "name": { "pt": "Personalização de escrita à tinta e digitação", "en": "Inking & typing personalization" },
+      "category": "Privacidade",
+      "subcategory": "Entrada",
+      "technicalDescription": "Valores RestrictImplicitInkCollection=1 e RestrictImplicitTextCollection=1 (DWORD) em HKCU\\Software\\Microsoft\\InputPersonalization ('Desativar aprendizado automático' de personalização de escrita à mão).",
+      "plainExplanation": "Impede que o Windows aprenda com o que você escreve e digita para montar um dicionário pessoal.",
+      "evidence": "Valores associados à política 'Desativar aprendizado automático' (Personalização de escrita à mão).",
+      "references": [
+        "https://r-pufky.github.io/docs/operating-systems/windows/10/21H2/settings/privacy/ink-and-typing-personalization.html"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "Sugestões de texto e reconhecimento de escrita deixam de se adaptar ao usuário.",
+      "restart": "SignOut",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Aprendizado permitido (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\InputPersonalization", "name": "RestrictImplicitInkCollection", "kind": "DWord", "value": "0", "equivalents": [null] },
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\InputPersonalization", "name": "RestrictImplicitTextCollection", "kind": "DWord", "value": "0", "equivalents": [null] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Aprendizado desativado",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\InputPersonalization", "name": "RestrictImplicitInkCollection", "kind": "DWord", "value": "1" },
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\InputPersonalization", "name": "RestrictImplicitTextCollection", "kind": "DWord", "value": "1" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "input", "typing"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Configurações > Privacidade > Personalização de escrita à tinta e digitação."
+    },
+    {
+      "id": "privacy.start.trackprogs",
+      "name": { "pt": "Rastrear aberturas de apps para o Iniciar", "en": "Track app launches for Start and search" },
+      "category": "Privacidade",
+      "subcategory": "Histórico",
+      "technicalDescription": "Valor Start_TrackProgs (DWORD) em HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced: 1 = rastrear (padrão; ausente equivale a 1), 0 = não rastrear.",
+      "plainExplanation": "Impede o Windows de registrar quais apps você abre para montar a lista de 'mais usados' e melhorar a pesquisa. Os dados ficam no PC.",
+      "evidence": "Comportamento da opção 'Permitir que o Windows melhore os resultados do Iniciar e da pesquisa acompanhando a inicialização de aplicativos'. Ganho de privacidade local pequeno.",
+      "references": [],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Minimal",
+      "impact": "Negligible",
+      "sideEffects": "A lista 'Mais usados' do Iniciar deixa de funcionar.",
+      "restart": "ExplorerRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Rastrear (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Start_TrackProgs", "kind": "DWord", "value": "1", "equivalents": [null] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Não rastrear",
+          "targets": [ { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Start_TrackProgs", "kind": "DWord", "value": "0" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": true,
+      "tags": ["privacy", "start-menu"],
+      "benchmarkProcedure": "Não aplicável a desempenho.",
+      "origin": "Configurações > Privacidade > Geral."
+    }
+  ]
+}

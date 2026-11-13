@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- RBM Places: abre várias places do Roblox Studio de uma vez (recentes, grupos, favoritos). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>Rbm.StudioLauncher</RootNamespace>
+    <AssemblyName>RBMPlaces</AssemblyName>
+    <ApplicationIcon>../Rbm.UI/Assets/rbm.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Mesmo tema visual do RBM Optimizer -->
+    <Page Include="../Rbm.UI/Themes/Colors.xaml" Link="Themes/Colors.xaml" />
+    <Page Include="../Rbm.UI/Themes/Controls.xaml" Link="Themes/Controls.xaml" />
+    <Resource Include="../Rbm.UI/Assets/rbm.ico" Link="Assets/rbm.ico" />
+  </ItemGroup>
+</Project>

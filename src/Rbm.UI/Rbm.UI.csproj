@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Rbm.UI</RootNamespace>
+    <AssemblyName>RBMOptimizer</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/rbm.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rbm.Core\Rbm.Core.csproj" />
+    <ProjectReference Include="../Rbm.Processes/Rbm.Processes.csproj" />
+    <ProjectReference Include="../Rbm.Latency/Rbm.Latency.csproj" />
+    <ProjectReference Include="..\Rbm.Data\Rbm.Data.csproj" />
+    <ProjectReference Include="..\Rbm.Security\Rbm.Security.csproj" />
+    <ProjectReference Include="..\Rbm.Hardware\Rbm.Hardware.csproj" />
+    <ProjectReference Include="..\Rbm.Monitoring\Rbm.Monitoring.csproj" />
+    <ProjectReference Include="..\Rbm.Diagnostics\Rbm.Diagnostics.csproj" />
+    <ProjectReference Include="..\Rbm.Optimization\Rbm.Optimization.csproj" />
+    <ProjectReference Include="..\Rbm.Restore\Rbm.Restore.csproj" />
+    <ProjectReference Include="..\Rbm.Drivers\Rbm.Drivers.csproj" />
+    <ProjectReference Include="..\Rbm.Benchmarks\Rbm.Benchmarks.csproj" />
+    <ProjectReference Include="..\Rbm.Gaming\Rbm.Gaming.csproj" />
+    <ProjectReference Include="..\Rbm.Network\Rbm.Network.csproj" />
+    <!-- O agente é copiado para a saída da UI (não é referenciado como assembly). -->
+    <ProjectReference Include="..\Rbm.Agent\Rbm.Agent.csproj" ReferenceOutputAssembly="false" OutputItemType="RbmAgentOutput" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\**\*.png" />
+  </ItemGroup>
+  <!-- Copia o RBM.Agent (processo elevado) para junto do executável da UI. -->
+  <Target Name="CopyAgent" AfterTargets="Build">
+    <ItemGroup>
+      <AgentFiles Include="$(ArtifactsPath)/bin/Rbm.Agent/$(ArtifactsPivots)/**/*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(AgentFiles)" DestinationFolder="$(OutDir)%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

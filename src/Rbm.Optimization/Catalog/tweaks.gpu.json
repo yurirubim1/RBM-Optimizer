@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "gpu.hags",
+      "name": { "pt": "Agendamento de GPU acelerado por hardware (HAGS)", "en": "Hardware-accelerated GPU scheduling" },
+      "category": "GPU",
+      "subcategory": "Agendamento",
+      "technicalDescription": "Valor HwSchMode (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers: 2 = ativado, 1 = desativado, ausente = decisão do sistema/driver. Com HAGS, o agendamento de trabalhos da GPU é feito por um processador de agendamento dedicado na GPU em vez da CPU (WDDM 2.7+).",
+      "plainExplanation": "Move parte do gerenciamento das tarefas da placa de vídeo para a própria placa. Em geral a diferença de FPS é pequena, mas é obrigatório para o DLSS Frame Generation da NVIDIA.",
+      "evidence": "Testes independentes (BabelTechReviews com 26 jogos, PCWorld) mostram diferenças pequenas e dependentes do jogo/driver, na maior parte dentro do ruído; há relatos isolados de stutter com algumas combinações de driver. O requisito de HAGS para DLSS 3 Frame Generation é documentado pela NVIDIA. Classificação B: benefício dependente do sistema.",
+      "references": [
+        "https://www.pcworld.com/article/2339130/should-you-enable-hardware-accelerated-gpu-scheduling-in-windows-11.html",
+        "https://babeltechreviews.com/?p=27289",
+        "https://winaero.com/turn-on-or-off-hardware-accelerated-gpu-scheduling-in-windows-10/",
+        "https://www.elevenforum.com/t/my-results-with-windows-hardware-acceleration-gpu-scheduling.5179/"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Algumas combinações de driver/jogo/captura relatam stutter ou problemas com gravação; desativar remove o suporte a Frame Generation (DLSS 3/4).",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 19041, "notes": "Requer GPU e driver com suporte (WDDM 2.7+; NVIDIA GTX 10+, AMD RX 5000+, Intel Arc). Se o toggle não aparece em Configurações > Sistema > Vídeo > Gráficos, o hardware/driver não suporta." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão do sistema (valor ausente)",
+          "notes": "Sem o valor, o Windows/driver decide. Em instalações recentes do Windows 11 com GPU compatível o recurso costuma vir ativado; no Windows 10 vinha desativado.",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "name": "HwSchMode", "kind": "DWord", "value": null }
+          ]
+        },
+        {
+          "key": "on",
+          "label": "Ativado",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "name": "HwSchMode", "kind": "DWord", "value": "2" }
+          ]
+        },
+        {
+          "key": "off",
+          "label": "Desativado",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "name": "HwSchMode", "kind": "DWord", "value": "1" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gpu", "hags", "wddm", "frame-generation"],
+      "benchmarkProcedure": "CapFrameX/PresentMon em 3 jogos (média, 1% low, latência PC via NVIDIA Reflex/FrameView quando disponível), 3 execuções cada, reiniciando entre os estados.",
+      "origin": "Recurso oficial do Windows 10 2004 (WDDM 2.7)."
+    },
+    {
+      "id": "gpu.windowed.optimizations",
+      "name": { "pt": "Otimizações para jogos em janela", "en": "Optimizations for windowed games" },
+      "category": "GPU",
+      "subcategory": "Apresentação (flip model)",
+      "technicalDescription": "Valor de string DirectXUserGlobalSettings em HKCU\\Software\\Microsoft\\DirectX\\UserGpuPreferences contendo o token 'SwapEffectUpgradeEnable=1;'. Faz o Windows converter jogos DX10/DX11 em janela/janela sem bordas do modelo de apresentação blt (legado) para flip model.",
+      "plainExplanation": "Jogos antigos (DirectX 10/11) rodando em janela ou tela cheia sem bordas passam a usar o modo moderno de exibição, que costuma ter menos atraso e libera VRR (G-Sync/FreeSync) e Auto HDR em janela.",
+      "evidence": "A Microsoft documenta que o flip model 'geralmente resulta em menor latência' e habilita VRR/Auto HDR para DX10/DX11 em janela (blog DirectX, artigo de suporte). DX12 não é afetado. Possível tearing sem V-Sync acima da taxa do monitor.",
+      "references": [
+        "https://devblogs.microsoft.com/directx/updates-in-graphics-and-gaming/",
+        "https://support.microsoft.com/en-us/topic/3f006843-2c7e-4ed0-9a5e-f9389e535952",
+        "https://elevenforum.com/t/turn-on-or-off-optimizations-for-windowed-games-in-windows-11.4943/"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Pode gerar tearing sem V-Sync/VRR acima da taxa de atualização. Alguns jogos/overlays antigos podem se comportar diferente; existe exclusão por app em Configurações > Gráficos. ATENÇÃO: o valor é uma string única que também pode conter outros tokens (ex.: AutoHDREnable, VRROptimizeEnable); aplicar regrava a string inteira.",
+      "restart": "AppRestart",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 22621, "notes": "Windows 11 22H2 ou superior. Ativar Auto HDR liga este recurso automaticamente." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (valor ausente)",
+          "notes": "Sem o valor, vale o padrão do sistema (desligado na maioria das instalações; há relatos de máquinas com o recurso ligado por padrão).",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\DirectX\\UserGpuPreferences", "name": "DirectXUserGlobalSettings", "kind": "String", "value": null }
+          ]
+        },
+        {
+          "key": "on",
+          "label": "Ativado",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\DirectX\\UserGpuPreferences", "name": "DirectXUserGlobalSettings", "kind": "String", "value": "SwapEffectUpgradeEnable=1;" }
+          ]
+        },
+        {
+          "key": "off",
+          "label": "Desativado explicitamente",
+          "targets": [
+            { "type": "registry", "hive": "HKCU", "path": "Software\\Microsoft\\DirectX\\UserGpuPreferences", "name": "DirectXUserGlobalSettings", "kind": "String", "value": "SwapEffectUpgradeEnable=0;" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "on",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gpu", "directx", "flip-model", "vrr", "latency", "windowed"],
+      "benchmarkProcedure": "Jogo DX11 em janela sem bordas: PresentMon/CapFrameX verificando o PresentMode ('Hardware: Independent Flip' vs 'Composed: Copy with GPU GDI'), latência PC (FrameView) e 1% low, 3 execuções.",
+      "origin": "Recurso oficial do Windows 11 22H2 (Configurações > Sistema > Vídeo > Gráficos)."
+    },
+    {
+      "id": "gpu.mpo.disable",
+      "name": { "pt": "Desativar Multiplane Overlay (MPO)", "en": "Disable Multiplane Overlay (MPO)" },
+      "category": "GPU",
+      "subcategory": "Solução de problemas",
+      "technicalDescription": "Valor OverlayTestMode = 5 (DWORD) em HKLM\\SOFTWARE\\Microsoft\\Windows\\Dwm desativa os planos de overlay de hardware usados pelo DWM. Valor não documentado publicamente pela Microsoft; usado em scripts de restauração publicados pela NVIDIA.",
+      "plainExplanation": "Desliga um recurso de composição de tela que, em algumas combinações de driver e monitor, causa piscadas, telas pretas rápidas ou travadinhas. Se você não tem esses sintomas, não há benefício.",
+      "evidence": "É um contorno de solução de problemas: relatos consistentes de correção de flicker/stutter com MPO em certas combinações (multi-monitor, taxas diferentes, VRR), e a NVIDIA publicou arquivos .reg de desativar/restaurar. Sem sintomas, desativar apenas aumenta o trabalho de composição. Não é otimização de desempenho.",
+      "references": [
+        "https://winutil.christitus.com/dev/tweaks/customize-preferences/multiplaneoverlay/",
+        "https://tier1settings.com/disable-mpo-to-fix-stutter-and-flickering/"
+      ],
+      "grade": "C",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Pode aumentar o custo de composição do DWM e o consumo (notebooks); desativa recursos que dependem de overlays (ex.: alguns caminhos de reprodução de vídeo eficientes).",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 19041, "notes": "Aplicar somente para diagnosticar flicker/stutter associado a MPO." },
+      "options": [
+        {
+          "key": "default",
+          "label": "MPO habilitado (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\Dwm", "name": "OverlayTestMode", "kind": "DWord", "value": null }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "MPO desativado (diagnóstico)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows\\Dwm", "name": "OverlayTestMode", "kind": "DWord", "value": "5" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gpu", "dwm", "mpo", "troubleshooting", "flicker"],
+      "benchmarkProcedure": "Reproduzir o sintoma (flicker/tela preta) com e sem o ajuste; medir frametime com PresentMon. Sem sintoma, não aplicar.",
+      "origin": "Artigo de suporte da NVIDIA sobre MPO (arquivos mpo_disable.reg/mpo_restore.reg) e comunidades r/Amd, r/nvidia."
+    },
+    {
+      "id": "gpu.tdr.delay",
+      "name": { "pt": "Tempo limite de TDR da GPU (TdrDelay)", "en": "GPU timeout detection delay (TdrDelay)" },
+      "category": "GPU",
+      "subcategory": "Solução de problemas",
+      "technicalDescription": "Valor TdrDelay (DWORD, segundos) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers. Padrão: 2 s (valor ausente). Define quanto tempo a GPU pode atrasar uma preempção antes de o Windows reiniciar o driver.",
+      "plainExplanation": "Aumenta o tempo que o Windows espera antes de considerar a placa de vídeo travada. Não melhora desempenho; apenas esconde travamentos e é útil só em cenários específicos de computação na GPU durante desenvolvimento.",
+      "evidence": "A Microsoft declara que as chaves TDR são apenas para desenvolvimento/depuração e que usuários finais e aplicativos não devem manipulá-las. Nenhum benefício de desempenho demonstrado.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/display/tdr-registry-keys",
+        "https://www.pugetsystems.com/labs/hpc/Working-around-TDR-in-Windows-for-a-better-GPU-computing-experience-777/"
+      ],
+      "grade": "D",
+      "confidence": "High",
+      "risk": "Medium",
+      "impact": "Negligible",
+      "sideEffects": "Travamentos reais da GPU passam a congelar a tela por mais tempo antes da recuperação; pode mascarar instabilidade de overclock/driver.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (2 s, valor ausente)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "name": "TdrDelay", "kind": "DWord", "value": null, "equivalents": ["2"] }
+          ]
+        },
+        {
+          "key": "extended-10",
+          "label": "10 segundos (somente depuração)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "name": "TdrDelay", "kind": "DWord", "value": "10" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["gpu", "tdr", "troubleshooting", "myth"],
+      "benchmarkProcedure": "Não há métrica de desempenho aplicável. Verificar apenas se o erro 'driver de vídeo parou de responder' (evento 4101) deixa de ocorrer em cargas de computação longas.",
+      "origin": "Guias de renderização/GPGPU (Puget Systems, Octane) e fóruns de 'correção' de crash."
+    }
+  ]
+}

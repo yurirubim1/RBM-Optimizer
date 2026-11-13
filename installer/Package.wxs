@@ -1,0 +1,37 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <!--
+    Instala em Program Files (pasta gravável apenas por administradores): isso protege o RBM.Agent
+    (processo elevado) contra substituição do executável por processos do usuário.
+  -->
+  <Package Name="RBM Optimizer" Manufacturer="RBM Optimizer" Version="$(ProductVersion)"
+           UpgradeCode="6B7D2F4E-8C1A-4E55-9C2B-3A1D7E5F9A10" Scope="perMachine" Compressed="yes" InstallerVersion="500">
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Uma versão mais recente do RBM Optimizer já está instalada." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="RbmIcon" SourceFile="..\src\Rbm.UI\Assets\rbm.ico" />
+    <Property Id="ARPPRODUCTICON" Value="RbmIcon" />
+    <Property Id="ARPCOMMENTS" Value="Diagnóstico, monitoramento e otimização de desempenho para Windows. Uso privado." />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <ui:WixUI Id="WixUI_InstallDir" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="RBM Optimizer">
+        <Files Include="$(PublishDir)\**" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="9E1C4A77-5B2D-4F0B-8E6A-1C2D3E4F5A60">
+        <Shortcut Id="RbmShortcut" Name="RBM Optimizer" Description="Diagnóstico e otimização de desempenho"
+                  Target="[INSTALLFOLDER]RBMOptimizer.exe" WorkingDirectory="INSTALLFOLDER" Icon="RbmIcon" />
+        <RegistryValue Root="HKCU" Key="Software\RBM Optimizer" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="0F4B8C21-7D3E-4A6F-9B1C-2E3D4F5A6B71">
+        <Shortcut Id="RbmDesktop" Name="RBM Optimizer" Target="[INSTALLFOLDER]RBMOptimizer.exe" WorkingDirectory="INSTALLFOLDER" Icon="RbmIcon" />
+        <RegistryValue Root="HKCU" Key="Software\RBM Optimizer" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+  </Package>
+</Wix>

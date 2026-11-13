@@ -1,0 +1,76 @@
+<UserControl x:Class="Rbm.UI.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Geral" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Idioma" Style="{StaticResource T.Muted}" Margin="0,14,0,6" />
+                        <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}" Width="260" HorizontalAlignment="Left" />
+                        <TextBlock Text="Atualizar os gráficos a cada" Style="{StaticResource T.Muted}" Margin="0,14,0,6" />
+                        <ComboBox ItemsSource="{Binding Intervals}" SelectedItem="{Binding Interval}" Width="260" HorizontalAlignment="Left" />
+                        <TextBlock Text="Intervalos maiores deixam o RBM ainda mais leve (o consumo já é muito baixo)." Style="{StaticResource T.Caption}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Sensores" Style="{StaticResource T.H2}" />
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding SensorsEnabled}" Margin="0,14,0,0">
+                            <TextBlock Text="Ler temperaturas, velocidades e consumo dos componentes" Style="{StaticResource T.Base}" ToolTip="Usa a biblioteca LibreHardwareMonitor (código aberto). Requer reiniciar o app." />
+                        </ToggleButton>
+                        <TextBlock Text="{Binding SensorStatus}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Proteção ao fazer alterações" Style="{StaticResource T.H2}" />
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding RestoreBeforeRisky}" Margin="0,14,0,0">
+                            <TextBlock Text="Criar ponto de restauração antes de ajustes de risco médio/alto" Style="{StaticResource T.Base}" />
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding RestoreBeforeProfile}" Margin="0,12,0,0">
+                            <TextBlock Text="Criar ponto de restauração antes de aplicar perfis" Style="{StaticResource T.Base}" />
+                        </ToggleButton>
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,10,0,0"
+                                   Text="Independentemente disso, toda alteração tem snapshot do estado anterior, verificação por releitura e reversão individual no Histórico. Pontos de restauração não substituem backups completos." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Privacidade" Style="{StaticResource T.H2}" />
+                        <TextBlock Style="{StaticResource T.Wrap}" Margin="0,10,0,0" FontSize="12.5"
+                                   Text="O RBM Optimizer não possui telemetria, não exige conta e não depende de servidores próprios. Todos os dados (histórico, benchmarks, diagnósticos, logs) ficam neste computador. O app só acessa a internet quando você executa testes de rede, baixa o PresentMon (repositório oficial da Intel, com verificação de assinatura) ou abre links oficiais de fabricantes." />
+                        <TextBlock Text="Dados locais" Style="{StaticResource T.H3}" Margin="0,14,0,6" />
+                        <DockPanel Margin="0,2"><Button DockPanel.Dock="Right" Content="Abrir" Padding="10,4" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding DataFolder}" /><TextBlock Text="{Binding DataFolder}" Style="{StaticResource T.Muted}" FontFamily="{StaticResource F.Mono}" FontSize="11.5" VerticalAlignment="Center" /></DockPanel>
+                        <DockPanel Margin="0,4"><Button DockPanel.Dock="Right" Content="Abrir" Padding="10,4" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding AuditFolder}" /><TextBlock Text="{Binding AuditFolder, StringFormat=Auditoria do agente: {0}}" Style="{StaticResource T.Muted}" FontFamily="{StaticResource F.Mono}" FontSize="11.5" VerticalAlignment="Center" /></DockPanel>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Sobre e licenças" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="{Binding VersionText}" Style="{StaticResource T.Muted}" Margin="0,6,0,10" />
+                        <ItemsControl ItemsSource="{Binding Licenses}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:LicenseInfo}">
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="1.4*" /><ColumnDefinition Width="0.8*" /><ColumnDefinition Width="1.6*" /></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Component}" Style="{StaticResource T.Base}" FontSize="12" />
+                                        <TextBlock Grid.Column="1" Text="{Binding License}" Style="{StaticResource T.Muted}" FontSize="12" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Use}" Style="{StaticResource T.Caption}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,10,0,0"
+                                   Text="Nenhum código proprietário de ferramentas de terceiros foi copiado. Funcionalidades inspiradas em ferramentas existentes foram implementadas com APIs documentadas do Windows." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

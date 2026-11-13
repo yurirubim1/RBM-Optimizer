@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:Rbm.UI.ViewModels"
+                    xmlns:v="clr-namespace:Rbm.UI.Views">
+    <!-- Mapeia cada ViewModel de página para sua View -->
+    <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><v:DashboardView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:RecommendationsViewModel}"><v:RecommendationsView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DiagnosticsViewModel}"><v:DiagnosticsView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:MonitoringViewModel}"><v:MonitoringView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:CpuViewModel}"><v:CpuView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:GpuViewModel}"><v:GpuView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:MemoryViewModel}"><v:MemoryView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:StorageViewModel}"><v:StorageView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:PowerViewModel}"><v:PowerView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:SpaceViewModel}"><v:SpaceView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:OptimizationsViewModel}"><v:OptimizationsView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ProfilesViewModel}"><v:ProfilesView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:GamingViewModel}"><v:GamingView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:CleanupViewModel}"><v:CleanupView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:LatencyViewModel}"><v:LatencyView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:NetworkViewModel}"><v:NetworkView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:BenchmarksViewModel}"><v:BenchmarksView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ProcessesViewModel}"><v:ProcessesView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:StartupViewModel}"><v:StartupView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DriversViewModel}"><v:DriversView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><v:HistoryView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><v:SettingsView /></DataTemplate>
+</ResourceDictionary>

@@ -1,0 +1,506 @@
+<Window x:Class="Rbm.StudioLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:Rbm.StudioLauncher"
+        Title="RBM Places" Width="1320" Height="840" MinWidth="980" MinHeight="600"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource B.Bg}" Foreground="{StaticResource B.Text}"
+        FontFamily="{StaticResource F.Ui}" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="6" GlassFrameThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+    <Window.TaskbarItemInfo><TaskbarItemInfo x:Name="Taskbar" /></Window.TaskbarItemInfo>
+    <Window.Resources>
+        <!-- Item da barra lateral -->
+        <DataTemplate x:Key="NavTpl" DataType="{x:Type l:NavEntry}">
+            <Button Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Cursor="Hand" FocusVisualStyle="{x:Null}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" CornerRadius="7" Margin="8,1" Padding="10,7" Background="Transparent">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Right" CornerRadius="9" Padding="7,1" Background="{StaticResource B.Surface3}" Visibility="{Binding Count, Converter={StaticResource Vis}}">
+                                    <TextBlock Text="{Binding Count}" FontSize="11" Foreground="{StaticResource B.TextMuted}" />
+                                </Border>
+                                <Grid Width="22" Height="22" Margin="0,0,10,0">
+                                    <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource F.Icons}" FontSize="14" Foreground="{StaticResource B.TextMuted}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <Border CornerRadius="5" ClipToBounds="True" Visibility="{Binding Icon, Converter={StaticResource Vis}}">
+                                        <Border.Background><ImageBrush ImageSource="{Binding Icon, TargetNullValue={x:Null}}" Stretch="UniformToFill" /></Border.Background>
+                                    </Border>
+                                </Grid>
+                                <TextBlock x:Name="t" Text="{Binding Title}" Foreground="{StaticResource B.TextMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" />
+                            </DockPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bg" Property="Background" Value="{StaticResource B.Hover}" /></Trigger>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource B.AccentSoft}" />
+                                <Setter TargetName="t" Property="Foreground" Value="{StaticResource B.Text}" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </DataTemplate>
+
+        <!-- Menu de contexto escuro -->
+        <Style TargetType="ContextMenu">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{StaticResource B.Surface3}" BorderBrush="{StaticResource B.BorderStrong}" BorderThickness="1" CornerRadius="8" Padding="4">
+                            <StackPanel IsItemsHost="True" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Foreground" Value="{StaticResource B.Text}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="bd" CornerRadius="5" Padding="12,7" Background="Transparent" MinWidth="230">
+                            <ContentPresenter ContentSource="Header" TextElement.Foreground="{TemplateBinding Foreground}" TextElement.FontSize="13" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource B.AccentSoft}" /></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <ContextMenu x:Key="GameMenu">
+            <MenuItem Header="Abrir agora" Command="{Binding PlacementTarget.Tag.OpenOneCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+            <MenuItem Header="Criar pasta do projeto e vincular" Command="{Binding PlacementTarget.Tag.CreateFolderForCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+            <MenuItem Header="Vincular a uma pasta existente…" Command="{Binding PlacementTarget.Tag.LinkFolderToCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+            <MenuItem Header="Desvincular pasta" Command="{Binding PlacementTarget.Tag.UnlinkCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+            <MenuItem Header="Favoritar / desfavoritar" Command="{Binding PlacementTarget.Tag.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+        </ContextMenu>
+        <ContextMenu x:Key="FolderMenu">
+            <MenuItem Header="Abrir no VS Code" Command="{Binding PlacementTarget.Tag.OpenOneCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+            <MenuItem Header="Vincular a um jogo do Roblox…" Command="{Binding PlacementTarget.Tag.LinkGameToCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+            <MenuItem Header="Desvincular jogo" Command="{Binding PlacementTarget.Tag.UnlinkCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+        </ContextMenu>
+
+        <!-- Cartão base (seleção por clique, abrir com duplo clique) -->
+        <Style x:Key="TileToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="196" /><Setter Property="Margin" Value="0,0,14,14" /><Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="card" CornerRadius="12" Background="{StaticResource B.Surface}" BorderBrush="{StaticResource B.Border}" BorderThickness="1.5" Padding="10">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="card" Property="BorderBrush" Value="{StaticResource B.BorderStrong}" /><Setter TargetName="card" Property="Background" Value="{StaticResource B.Surface2}" /></Trigger>
+                            <Trigger Property="IsChecked" Value="True"><Setter TargetName="card" Property="BorderBrush" Value="{StaticResource B.Accent}" /><Setter TargetName="card" Property="Background" Value="#1A2F7BFF" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Marca de seleção -->
+        <DataTemplate x:Key="CheckMark">
+            <Border Width="22" Height="22" CornerRadius="11" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6"
+                    Background="{StaticResource B.Accent}" Visibility="{Binding IsSelected, Converter={StaticResource Vis}}">
+                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource F.Icons}" FontSize="11" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type l:GameTile}">
+            <ToggleButton Style="{StaticResource TileToggle}" IsChecked="{Binding IsSelected}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" ContextMenu="{StaticResource GameMenu}" ToolTip="Clique para selecionar · duplo clique para abrir agora">
+                <ToggleButton.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding DataContext.OpenOneCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                </ToggleButton.InputBindings>
+                <StackPanel>
+                    <Grid Height="174">
+                        <Border CornerRadius="9" Background="{StaticResource B.Surface3}">
+                            <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource F.Icons}" FontSize="40" Foreground="{StaticResource B.TextFaint}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border CornerRadius="9" Visibility="{Binding Icon, Converter={StaticResource Vis}}">
+                            <Border.Background><ImageBrush ImageSource="{Binding Icon, TargetNullValue={x:Null}}" Stretch="UniformToFill" /></Border.Background>
+                        </Border>
+                        <ContentPresenter ContentTemplate="{StaticResource CheckMark}" Content="{Binding}" />
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4" Padding="6" Style="{StaticResource Btn.Icon}" Background="#99000000"
+                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" ToolTip="Favorito">
+                            <TextBlock FontFamily="{StaticResource F.Icons}" FontSize="13">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="&#xE734;" /><Setter Property="Foreground" Value="White" />
+                                        <Style.Triggers><DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter Property="Text" Value="&#xE735;" /><Setter Property="Foreground" Value="#FFFBBF24" /></DataTrigger></Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
+                        <WrapPanel VerticalAlignment="Bottom" Margin="6,6,2,4">
+                            <Border CornerRadius="8" Padding="7,2" Background="#E622C55E" Visibility="{Binding IsOpen, Converter={StaticResource Vis}}" Margin="0,0,4,2">
+                                <TextBlock Text="Aberto" FontSize="10.5" Foreground="White" FontWeight="SemiBold" ToolTip="Já está aberto no Roblox Studio" />
+                            </Border>
+                            <Border CornerRadius="8" Padding="7,2" Background="#CC0D1017" Visibility="{Binding LinkedFolder, Converter={StaticResource Vis}}" ToolTip="{Binding LinkedFolder.Path}">
+                                <TextBlock FontSize="10.5" Foreground="{StaticResource B.Cyan}"><Run Text="&#xE943;" FontFamily="{StaticResource F.Icons}" /> pasta</TextBlock>
+                            </Border>
+                            <Button Padding="7,2" Cursor="Hand" Visibility="{Binding LinkedFolder, Converter={StaticResource VisInv}}" ToolTip="Criar a pasta deste jogo e vincular (clique direito para mais opções)"
+                                    Command="{Binding DataContext.CreateFolderForCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="b" CornerRadius="8" Padding="{TemplateBinding Padding}" Background="#CC0D1017" BorderBrush="#664A8DFF" BorderThickness="1">
+                                            <TextBlock FontSize="10.5" Foreground="{StaticResource B.Text}"><Run Text="&#xE710;" FontFamily="{StaticResource F.Icons}" /> Criar pasta</TextBlock>
+                                        </Border>
+                                        <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{StaticResource B.Accent}" /></Trigger></ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </WrapPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource T.H3}" Margin="2,10,2,0" TextWrapping="Wrap" MaxHeight="38" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource T.Caption}" Margin="2,3,2,0" />
+                </StackPanel>
+            </ToggleButton>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type l:FolderTile}">
+            <ToggleButton Style="{StaticResource TileToggle}" IsChecked="{Binding IsSelected}" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" ContextMenu="{StaticResource FolderMenu}" ToolTip="{Binding Path}">
+                <ToggleButton.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding DataContext.OpenOneCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                </ToggleButton.InputBindings>
+                <StackPanel>
+                    <Grid Height="120">
+                        <Border CornerRadius="9" Background="{StaticResource B.Surface3}">
+                            <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource F.Icons}" FontSize="40" Foreground="#FF4A8DFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border CornerRadius="9" Visibility="{Binding Icon, Converter={StaticResource Vis}}" Opacity="0.9">
+                            <Border.Background><ImageBrush ImageSource="{Binding Icon, TargetNullValue={x:Null}}" Stretch="UniformToFill" /></Border.Background>
+                        </Border>
+                        <Border Width="34" Height="34" CornerRadius="8" Background="#E6181D27" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="6" Visibility="{Binding Icon, Converter={StaticResource Vis}}">
+                            <TextBlock Text="&#xE943;" FontFamily="{StaticResource F.Icons}" FontSize="16" Foreground="#FF4A8DFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ContentPresenter ContentTemplate="{StaticResource CheckMark}" Content="{Binding}" />
+                        <Border CornerRadius="8" Padding="7,2" Background="#E62F7BFF" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="6" Visibility="{Binding IsOpen, Converter={StaticResource Vis}}">
+                            <TextBlock Text="Aberto no VS Code" FontSize="10.5" Foreground="White" FontWeight="SemiBold" />
+                        </Border>
+                    </Grid>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource T.H3}" Margin="2,10,2,0" TextWrapping="Wrap" MaxHeight="38" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource T.Caption}" Margin="2,3,2,0" />
+                    <TextBlock Style="{StaticResource T.Caption}" Foreground="{StaticResource B.Cyan}" Margin="2,3,2,0" TextTrimming="CharacterEllipsis"
+                               Visibility="{Binding LinkedGame, Converter={StaticResource Vis}}" Text="{Binding LinkedGame.Name, StringFormat=🎮 {0}}" />
+                    <Button Style="{StaticResource Btn.Ghost}" Padding="2,2" HorizontalAlignment="Left" FontSize="11.5" Foreground="{StaticResource B.Accent}"
+                            Visibility="{Binding LinkedGame, Converter={StaticResource VisInv}}" ToolTip="Escolher o jogo do Roblox desta pasta"
+                            Command="{Binding DataContext.LinkGameToCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                        <TextBlock><Run Text="&#xE71B;" FontFamily="{StaticResource F.Icons}" /> Vincular a um jogo</TextBlock>
+                    </Button>
+                </StackPanel>
+            </ToggleButton>
+        </DataTemplate>
+
+        <!-- Estado de um chat -->
+        <Style x:Key="ChatDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="9" /><Setter Property="Height" Value="9" /><Setter Property="Fill" Value="{StaticResource B.TextFaint}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Working"><Setter Property="Fill" Value="{StaticResource B.Cyan}" /></DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Done"><Setter Property="Fill" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="WaitingYou"><Setter Property="Fill" Value="{StaticResource B.Warning}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ChatStateText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" /><Setter Property="Foreground" Value="{StaticResource B.TextMuted}" /><Setter Property="FontWeight" Value="SemiBold" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Working"><Setter Property="Foreground" Value="{StaticResource B.Cyan}" /></DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Done"><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="WaitingYou"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions><RowDefinition Height="40" /><RowDefinition Height="*" /><RowDefinition Height="30" /></Grid.RowDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="250" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+        <!-- Título -->
+        <Border Grid.ColumnSpan="2" Background="{StaticResource B.Sidebar}" BorderBrush="{StaticResource B.Border}" BorderThickness="0,0,0,1">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
+                    <Border Width="22" Height="22" CornerRadius="6" Background="{StaticResource B.AccentGradient}">
+                        <TextBlock Text="&#xE768;" FontFamily="{StaticResource F.Icons}" Foreground="White" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="RBM" Style="{StaticResource T.H3}" Margin="10,0,0,0" FontSize="13.5" />
+                    <TextBlock Text="Places" Style="{StaticResource T.Muted}" Margin="5,0,0,0" FontSize="13.5" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource Btn.Icon}" Content="&#xE921;" Width="46" Height="40" Click="Min_Click" />
+                    <Button Style="{StaticResource Btn.Icon}" Content="&#xE922;" Width="46" Height="40" Click="Max_Click" />
+                    <Button Style="{StaticResource Btn.Icon}" Content="&#xE8BB;" Width="46" Height="40" Click="Close_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Barra lateral -->
+        <Border Grid.Row="1" Background="{StaticResource B.Sidebar}" BorderBrush="{StaticResource B.Border}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <Button DockPanel.Dock="Bottom" Style="{StaticResource Btn.Ghost}" Margin="10" HorizontalContentAlignment="Left" Command="{Binding ToggleSettingsCommand}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" FontFamily="{StaticResource F.Icons}" Margin="0,0,10,0" VerticalAlignment="Center" /><TextBlock Text="Configurações" /></StackPanel>
+                </Button>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,8">
+                    <StackPanel>
+                        <TextBlock Text="CLAUDE" Style="{StaticResource T.Overline}" Margin="22,8,0,6" />
+                        <Button Command="{Binding ShowChatsCommand}" Cursor="Hand" FocusVisualStyle="{x:Null}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bg" CornerRadius="7" Margin="8,1" Padding="10,7" Background="Transparent">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Right" CornerRadius="9" Padding="7,1" Background="{StaticResource B.Warning}" Visibility="{Binding NeedsYou, Converter={StaticResource Vis}}" ToolTip="Conversas que terminaram ou precisam de você">
+                                                <TextBlock Text="{Binding NeedsYou}" FontSize="11" Foreground="Black" FontWeight="Bold" />
+                                            </Border>
+                                            <Border DockPanel.Dock="Right" CornerRadius="9" Padding="7,1" Margin="0,0,4,0" Background="{StaticResource B.AccentSoft}" Visibility="{Binding Working, Converter={StaticResource Vis}}" ToolTip="Trabalhando agora">
+                                                <TextBlock Text="{Binding Working}" FontSize="11" Foreground="{StaticResource B.Cyan}" />
+                                            </Border>
+                                            <TextBlock Text="&#xE8BD;" FontFamily="{StaticResource F.Icons}" FontSize="14" Foreground="{StaticResource B.Violet}" VerticalAlignment="Center" Width="22" Margin="0,0,10,0" />
+                                            <TextBlock x:Name="t" Text="Chats do Claude" Foreground="{StaticResource B.TextMuted}" VerticalAlignment="Center" FontSize="13" />
+                                        </DockPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bg" Property="Background" Value="{StaticResource B.Hover}" /></Trigger>
+                                        <DataTrigger Binding="{Binding IsChatsView}" Value="True"><Setter TargetName="bg" Property="Background" Value="{StaticResource B.AccentSoft}" /><Setter TargetName="t" Property="Foreground" Value="{StaticResource B.Text}" /></DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <TextBlock Text="ROBLOX STUDIO" Style="{StaticResource T.Overline}" Margin="22,16,0,6" />
+                        <ItemsControl ItemsSource="{Binding Sections}" ItemTemplate="{StaticResource NavTpl}" />
+                        <TextBlock Text="GRUPOS" Style="{StaticResource T.Overline}" Margin="22,14,0,6" />
+                        <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{StaticResource NavTpl}" />
+                        <TextBlock Text="Informe sua conta em Configurações para ver todos os seus grupos." Style="{StaticResource T.Caption}" TextWrapping="Wrap" Margin="22,4,16,0"
+                                   Visibility="{Binding AccountInput, Converter={StaticResource VisInv}}" />
+                        <TextBlock Text="VS CODE" Style="{StaticResource T.Overline}" Margin="22,16,0,6" />
+                        <ItemsControl ItemsSource="{Binding CodeSections}" ItemTemplate="{StaticResource NavTpl}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- Conteúdo -->
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+            <StackPanel Margin="28,18,28,0">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource T.H1}" />
+                <TextBlock Text="{Binding Subtitle}" Style="{StaticResource T.Muted}" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <!-- Barra de ações (jogos e pastas) -->
+            <DockPanel Grid.Row="1" Margin="28,14,28,14" Visibility="{Binding IsChatsView, Converter={StaticResource VisInv}}">
+                <Button DockPanel.Dock="Right" Style="{StaticResource Btn.Primary}" Padding="16,8" Command="{Binding OpenSelectedCommand}" Margin="8,0,0,0">
+                    <TextBlock><Run Text="&#xE8A7;" FontFamily="{StaticResource F.Icons}" /> <Run Text="Abrir selecionados" /> <Run Text="{Binding SelectedCount, Mode=OneWay, StringFormat=({0})}" /></TextBlock>
+                </Button>
+                <Button DockPanel.Dock="Right" Content="Restaurar última sessão" Margin="8,0,0,0" Command="{Binding RestoreSessionCommand}"
+                        ToolTip="Reabre o que estava aberto no Studio e no VS Code da última vez" />
+                <ToggleButton DockPanel.Dock="Right" Style="{StaticResource Switch}" IsChecked="{Binding OpenTogether}" VerticalAlignment="Center" Margin="12,0,6,0"
+                              ToolTip="Ao abrir um jogo, abre também a pasta dele no VS Code (e vice-versa)">
+                    <TextBlock Text="Abrir Studio + VS Code juntos" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" />
+                </ToggleButton>
+                <TextBox Width="240" Tag="Buscar…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" />
+                <Button Content="Selecionar tudo" Margin="8,0,0,0" Style="{StaticResource Btn.Ghost}" Command="{Binding SelectAllCommand}" HorizontalAlignment="Left" />
+                <Button Content="Limpar" Style="{StaticResource Btn.Ghost}" Command="{Binding ClearSelectionCommand}" HorizontalAlignment="Left" Visibility="{Binding SelectedCount, Converter={StaticResource Vis}}" />
+            </DockPanel>
+
+            <!-- Grade -->
+            <Grid Grid.Row="2" Visibility="{Binding IsChatsView, Converter={StaticResource VisInv}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,14,16">
+                    <ItemsControl ItemsSource="{Binding TilesView}">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding IsEmpty, Converter={StaticResource Vis}}" MaxWidth="420">
+                    <TextBlock Text="&#xE7C3;" Style="{StaticResource EmptyIcon}" />
+                    <TextBlock Text="{Binding EmptyText}" Style="{StaticResource T.Lead}" TextAlignment="Center" />
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource Vis}}">
+                    <ProgressBar IsIndeterminate="True" Width="220" />
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource T.Muted}" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Chats -->
+            <Grid Grid.Row="1" Grid.RowSpan="2" Margin="28,14,28,16" Visibility="{Binding IsChatsView, Converter={StaticResource Vis}}">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="400" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <DockPanel Margin="0,0,14,0">
+                    <ToggleButton DockPanel.Dock="Top" Style="{StaticResource Switch}" IsChecked="{Binding ChatNotifications}" Margin="2,0,0,12">
+                        <TextBlock Text="Avisar quando um Claude terminar ou precisar de mim" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" />
+                    </ToggleButton>
+                    <Grid>
+                        <ListBox ItemsSource="{Binding Chats}" SelectedItem="{Binding SelectedChat}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type l:ChatSession}">
+                                    <Border Background="{StaticResource B.Surface}" CornerRadius="9" Padding="14,11">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Ago}" Style="{StaticResource T.Caption}" />
+                                                <Ellipse Width="8" Height="8" Fill="{StaticResource B.Violet}" Margin="0,0,7,0" Visibility="{Binding Unread, Converter={StaticResource Vis}}" ToolTip="Novo" />
+                                                <TextBlock Text="{Binding Project}" Style="{StaticResource T.H3}" TextTrimming="CharacterEllipsis" />
+                                            </DockPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                <Ellipse Style="{StaticResource ChatDot}" Margin="0,0,7,0" />
+                                                <TextBlock Text="{Binding StateText}" Style="{StaticResource ChatStateText}" />
+                                                <TextBlock Text=" · janela aberta" Style="{StaticResource T.Caption}" Visibility="{Binding WindowOpen, Converter={StaticResource Vis}}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding LastUser, StringFormat=Você: {0}}" Style="{StaticResource T.Caption}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" Visibility="{Binding LastUser, Converter={StaticResource Vis}}" />
+                                            <TextBlock Text="{Binding LastAssistant}" Style="{StaticResource T.WrapMuted}" FontSize="12" MaxHeight="34" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Text="Nenhuma conversa do Claude nos últimos 3 dias." Style="{StaticResource T.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Visibility="{Binding Chats.Count, Converter={StaticResource VisInv}}" />
+                    </Grid>
+                </DockPanel>
+                <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0" Padding="0">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Padding="20,14" BorderBrush="{StaticResource B.Border}" BorderThickness="0,0,0,1">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource Btn.Primary}" Command="{Binding GoToChatCommand}" Padding="14,7">
+                                    <TextBlock><Run Text="&#xE8A7;" FontFamily="{StaticResource F.Icons}" /> <Run Text="Ir para a janela" /></TextBlock>
+                                </Button>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelectedChat.Project, TargetNullValue=Selecione uma conversa}" Style="{StaticResource T.H2}" />
+                                    <TextBlock Text="{Binding SelectedChat.Title}" Style="{StaticResource T.Caption}" TextTrimming="CharacterEllipsis" Margin="0,2,12,0" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                        <Border DockPanel.Dock="Bottom" Padding="20,10" BorderBrush="{StaticResource B.Border}" BorderThickness="0,1,0,0">
+                            <TextBlock Style="{StaticResource T.Caption}" TextWrapping="Wrap"
+                                       Text="Para responder, clique em “Ir para a janela”: o RBM traz o VS Code desse projeto para frente, com o Claude e todo o contexto. Esta lista é só leitura — atualiza sozinha a cada 3 s." />
+                        </Border>
+                        <ScrollViewer x:Name="ChatScroll" VerticalScrollBarVisibility="Auto" Padding="20,14">
+                            <ItemsControl ItemsSource="{Binding ChatMessages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type l:ChatMessage}">
+                                        <Border x:Name="b" CornerRadius="12" Padding="14,10" Margin="0,0,80,10" Background="{StaticResource B.Surface2}" HorizontalAlignment="Left" MaxWidth="760">
+                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="13" LineHeight="20" Foreground="{StaticResource B.Text}" />
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding FromUser}" Value="True">
+                                                <Setter TargetName="b" Property="HorizontalAlignment" Value="Right" />
+                                                <Setter TargetName="b" Property="Margin" Value="80,0,0,10" />
+                                                <Setter TargetName="b" Property="Background" Value="#332F7BFF" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Status -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{StaticResource B.Sidebar}" BorderBrush="{StaticResource B.Border}" BorderThickness="0,1,0,0">
+            <DockPanel Margin="14,0" LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource T.Caption}" Margin="0,0,16,0"><Run Text="Studio abertos:" /> <Run Text="{Binding RunningStudios, Mode=OneWay}" Foreground="{StaticResource B.Text}" /></TextBlock>
+                    <TextBlock Style="{StaticResource T.Caption}" Margin="0,0,16,0"><Run Text="VS Code:" /> <Run Text="{Binding OpenCodeWindows, Mode=OneWay}" Foreground="{StaticResource B.Text}" /> <Run Text="janela(s)" /></TextBlock>
+                    <TextBlock Style="{StaticResource T.Caption}"><Run Text="Claude trabalhando:" /> <Run Text="{Binding Working, Mode=OneWay}" Foreground="{StaticResource B.Cyan}" /></TextBlock>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ProgressBar Width="120" Height="4" Value="{Binding OpenProgress}" Margin="0,0,10,0" Visibility="{Binding IsOpening, Converter={StaticResource Vis}}" />
+                    <Button Content="Parar" Style="{StaticResource Btn.Ghost}" Padding="6,0" FontSize="11.5" Command="{Binding StopOpeningCommand}" Visibility="{Binding IsOpening, Converter={StaticResource Vis}}" />
+                    <TextBlock Text="{Binding Status}" Style="{StaticResource T.Caption}" VerticalAlignment="Center" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Nova pasta de projeto -->
+        <Grid Grid.RowSpan="3" Grid.ColumnSpan="2" Background="{StaticResource B.Overlay}" Visibility="{Binding ShowNewFolder, Converter={StaticResource Vis}}">
+            <Border Width="520" Background="{StaticResource B.Surface2}" BorderBrush="{StaticResource B.BorderStrong}" BorderThickness="1" CornerRadius="12" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Criar pasta do projeto" Style="{StaticResource T.H2}" FontSize="18" />
+                    <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12.5" Margin="0,6,0,0">
+                        <Run Text="A pasta será criada em" /> <Run Text="{Binding ProjectsRoot, Mode=OneWay}" Foreground="{StaticResource B.Text}" /> <Run Text="e ficará vinculada a este jogo: ao abrir um, o outro abre junto." />
+                    </TextBlock>
+                    <TextBlock Text="Nome da pasta" Style="{StaticResource T.H3}" Margin="0,16,0,6" />
+                    <TextBox Text="{Binding NewFolderName, UpdateSourceTrigger=PropertyChanged}" />
+                    <CheckBox Content="Abrir no VS Code depois de criar" IsChecked="{Binding OpenNewFolderInCode}" Margin="0,12,0,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Content="Cancelar" Command="{Binding CancelDialogsCommand}" Margin="0,0,10,0" />
+                        <Button Content="Criar e vincular" Style="{StaticResource Btn.Primary}" Command="{Binding ConfirmNewFolderCommand}" IsDefault="True" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Escolher jogo para uma pasta -->
+        <Grid Grid.RowSpan="3" Grid.ColumnSpan="2" Background="{StaticResource B.Overlay}" Visibility="{Binding ShowPicker, Converter={StaticResource Vis}}">
+            <Border Width="620" Height="560" Background="{StaticResource B.Surface2}" BorderBrush="{StaticResource B.BorderStrong}" BorderThickness="1" CornerRadius="12" Padding="22" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource Btn.Icon}" Content="&#xE711;" Command="{Binding CancelDialogsCommand}" />
+                        <TextBlock Text="{Binding PickerTitle}" Style="{StaticResource T.H2}" FontSize="17" TextWrapping="Wrap" />
+                    </DockPanel>
+                    <TextBox DockPanel.Dock="Top" Tag="Buscar jogo…" Text="{Binding PickerSearch, UpdateSourceTrigger=PropertyChanged}" Margin="0,14,0,10" />
+                    <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource T.Caption}" Margin="0,10,0,0" TextWrapping="Wrap"
+                               Text="Não achou? Abra o grupo do jogo na barra lateral (ou informe sua conta em Configurações) para carregar mais jogos." />
+                    <ListBox ItemsSource="{Binding PickerGames}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type l:GameTile}">
+                                <Button Command="{Binding DataContext.PickGameCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                        Style="{StaticResource Btn.Ghost}" HorizontalContentAlignment="Stretch" Padding="8,6">
+                                    <DockPanel>
+                                        <Border Width="44" Height="44" CornerRadius="7" Background="{StaticResource B.Surface3}" Margin="0,0,12,0">
+                                            <Border CornerRadius="7" Visibility="{Binding Icon, Converter={StaticResource Vis}}">
+                                                <Border.Background><ImageBrush ImageSource="{Binding Icon, TargetNullValue={x:Null}}" Stretch="UniformToFill" /></Border.Background>
+                                            </Border>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource T.H3}" />
+                                            <TextBlock Text="{Binding Group}" Style="{StaticResource T.Caption}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- Configurações -->
+        <Grid Grid.RowSpan="3" Grid.ColumnSpan="2" Background="{StaticResource B.Overlay}" Visibility="{Binding ShowSettings, Converter={StaticResource Vis}}">
+            <Border Width="560" Background="{StaticResource B.Surface2}" BorderBrush="{StaticResource B.BorderStrong}" BorderThickness="1" CornerRadius="12" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource Btn.Icon}" Content="&#xE711;" Command="{Binding ToggleSettingsCommand}" />
+                        <TextBlock Text="Configurações" Style="{StaticResource T.H2}" FontSize="18" />
+                    </DockPanel>
+                    <TextBlock Text="Sua conta do Roblox (a usada no Studio)" Style="{StaticResource T.H3}" Margin="0,18,0,4" />
+                    <TextBlock Text="Só o nome de usuário público — para listar os grupos em que você está. Nenhuma senha ou login é usado." Style="{StaticResource T.WrapMuted}" FontSize="12" />
+                    <DockPanel Margin="0,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="Salvar" Margin="8,0,0,0" Style="{StaticResource Btn.Primary}" Command="{Binding SaveAccountCommand}" />
+                        <TextBox Tag="Nome de usuário" Text="{Binding AccountInput, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding AccountText}" Style="{StaticResource T.Caption}" Margin="0,4,0,0" />
+
+                    <TextBlock Text="Adicionar um grupo" Style="{StaticResource T.H3}" Margin="0,18,0,4" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Adicionar" Margin="8,0,0,0" Command="{Binding AddGroupCommand}" />
+                        <TextBox Tag="Link ou ID do grupo" Text="{Binding GroupInput, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+
+                    <TextBlock Text="Pasta dos projetos (VS Code)" Style="{StaticResource T.H3}" Margin="0,18,0,4" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Escolher…" Margin="8,0,0,0" Command="{Binding ChooseProjectsRootCommand}" />
+                        <TextBlock Text="{Binding ProjectsRoot}" Style="{StaticResource T.Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+
+                    <TextBlock Text="Intervalo entre aberturas do Studio" Style="{StaticResource T.H3}" Margin="0,18,0,4" />
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding DelaySeconds, StringFormat={}{0} s}" Style="{StaticResource T.H3}" Width="40" TextAlignment="Right" />
+                        <Slider Minimum="2" Maximum="20" Value="{Binding DelaySeconds}" IsSnapToTickEnabled="True" TickFrequency="1" />
+                    </DockPanel>
+                    <TextBlock Text="Abrir vários Studios ao mesmo tempo sobrecarrega a placa de vídeo — um intervalo maior evita travamentos." Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,0" />
+                    <Button Content="Recarregar tudo" HorizontalAlignment="Left" Margin="0,18,0,0" Command="{Binding ReloadCommand}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

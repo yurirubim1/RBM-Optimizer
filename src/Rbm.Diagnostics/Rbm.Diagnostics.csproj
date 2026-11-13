@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Rbm.Diagnostics</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rbm.Core\Rbm.Core.csproj" />
+    <ProjectReference Include="..\Rbm.Hardware\Rbm.Hardware.csproj" />
+    <ProjectReference Include="..\Rbm.Monitoring\Rbm.Monitoring.csproj" />
+    <ProjectReference Include="..\Rbm.Optimization\Rbm.Optimization.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Management" />
+    <PackageReference Include="System.Diagnostics.EventLog" />
+  </ItemGroup>
+</Project>

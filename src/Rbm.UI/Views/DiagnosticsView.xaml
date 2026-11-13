@@ -1,0 +1,163 @@
+<UserControl x:Class="Rbm.UI.Views.DiagnosticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="clr-namespace:Rbm.Diagnostics;assembly=Rbm.Diagnostics"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels">
+    <UserControl.Resources>
+        <Style x:Key="KindChip" TargetType="Border" BasedOn="{StaticResource Chip.Info}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Kind}" Value="danger"><Setter Property="Background" Value="{StaticResource B.DangerSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="warn"><Setter Property="Background" Value="{StaticResource B.WarningSoft}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="KindText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{StaticResource B.Info}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Kind}" Value="danger"><Setter Property="Foreground" Value="{StaticResource B.Danger}" /></DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="warn"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HeroChip" TargetType="Border" BasedOn="{StaticResource Chip.Info}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HealthKind}" Value="ok"><Setter Property="Background" Value="{StaticResource B.SuccessSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="warn"><Setter Property="Background" Value="{StaticResource B.WarningSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="danger"><Setter Property="Background" Value="{StaticResource B.DangerSoft}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HeroChipText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{StaticResource B.Info}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HealthKind}" Value="ok"><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="warn"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="danger"><Setter Property="Foreground" Value="{StaticResource B.Danger}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <StackPanel>
+            <!-- Resumo -->
+            <Border Style="{StaticResource Hero}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <Border Style="{StaticResource HeroChip}"><TextBlock Text="{Binding HealthChip}" Style="{StaticResource HeroChipText}" /></Border>
+                        <TextBlock Text="{Binding HealthTitle}" Style="{StaticResource T.H1}" FontSize="21" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding HealthSentence}" Style="{StaticResource T.Lead}" Margin="0,4,0,0" MaxWidth="780" HorizontalAlignment="Left" />
+                        <TextBlock Text="{Binding RunInfo}" Style="{StaticResource T.Caption}" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding ProgressText}" Style="{StaticResource T.Caption}" Foreground="{StaticResource B.Cyan}" Margin="0,4,0,0" Visibility="{Binding Running, Converter={StaticResource Vis}}" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Verificar agora" Style="{StaticResource Btn.Primary}" VerticalAlignment="Center" Padding="18,9" Margin="16,0,0,0"
+                            Command="{Binding RunCommand}" IsEnabled="{Binding Running, Converter={StaticResource Not}}" />
+                </Grid>
+            </Border>
+
+            <!-- Filtros -->
+            <Border Background="{StaticResource B.Surface}" CornerRadius="8" Padding="3" BorderBrush="{StaticResource B.Border}" BorderThickness="1" HorizontalAlignment="Left" Margin="0,0,0,12"
+                    Visibility="{Binding HasRun, Converter={StaticResource Vis}}">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Style="{StaticResource Segment}" GroupName="df" IsChecked="True" Command="{Binding SetFilterCommand}" CommandParameter="all" Content="Tudo" />
+                    <RadioButton Style="{StaticResource Segment}" GroupName="df" Command="{Binding SetFilterCommand}" CommandParameter="important">
+                        <TextBlock><Run Text="Importantes " /><Run Text="{Binding Important, Mode=OneWay}" Foreground="{StaticResource B.Danger}" /></TextBlock>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Segment}" GroupName="df" Command="{Binding SetFilterCommand}" CommandParameter="attention">
+                        <TextBlock><Run Text="Atenção " /><Run Text="{Binding Attention, Mode=OneWay}" Foreground="{StaticResource B.Warning}" /></TextBlock>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Segment}" GroupName="df" Command="{Binding SetFilterCommand}" CommandParameter="tips">
+                        <TextBlock><Run Text="Dicas " /><Run Text="{Binding Tips, Mode=OneWay}" Foreground="{StaticResource B.Info}" /></TextBlock>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Callout.Ok}" Visibility="{Binding NoFindingsInFilter, Converter={StaticResource Vis}}" Margin="0,0,12,12">
+                <TextBlock Text="Nenhum item nesta categoria." Style="{StaticResource T.Wrap}" />
+            </Border>
+
+            <!-- Achados -->
+            <ItemsControl ItemsSource="{Binding Findings}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:FindingCard}">
+                        <Border Style="{StaticResource Card}" Padding="20,16">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Style="{StaticResource KindChip}"><TextBlock Text="{Binding Level}" Style="{StaticResource KindText}" /></Border>
+                                            <TextBlock Text="{Binding F.Category}" Style="{StaticResource T.Caption}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource T.H2}" FontSize="15.5" TextWrapping="Wrap" Margin="0,8,0,0" />
+                                        <TextBlock Text="{Binding Description}" Style="{StaticResource T.Lead}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="{Binding ButtonText}" Style="{StaticResource Btn.Primary}" VerticalAlignment="Top" Margin="16,0,0,0"
+                                            Visibility="{Binding HasAction, Converter={StaticResource Vis}}"
+                                            Command="{Binding DataContext.GoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding NavigateKey}" />
+                                </Grid>
+                                <Border Style="{StaticResource CardInner}" Margin="0,12,0,0" Padding="14,10">
+                                    <StackPanel>
+                                        <TextBlock Text="O QUE FAZER" Style="{StaticResource T.Overline}" Foreground="{StaticResource B.Cyan}" />
+                                        <TextBlock Text="{Binding Solution}" Style="{StaticResource T.Wrap}" Margin="0,4,0,0" />
+                                        <TextBlock Text="{Binding F.Risks, StringFormat=Cuidados: {0}}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,6,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Expander Margin="0,10,0,0">
+                                    <Expander.Header><TextBlock Text="Por que isso aparece? (evidências)" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" /></Expander.Header>
+                                    <StackPanel>
+                                        <ItemsControl ItemsSource="{Binding F.Evidence}">
+                                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat=• {0}}" Style="{StaticResource T.Wrap}" FontSize="12" /></DataTemplate></ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="{Binding F.ProbableCause, StringFormat=Causa provável: {0}}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,8,0,0" />
+                                        <TextBlock Text="Isto é uma associação observada nos dados, não uma causa confirmada." Style="{StaticResource T.Caption}" Foreground="{StaticResource B.Warning}" Margin="0,4,0,0"
+                                                   Visibility="{Binding F.CorrelationOnly, Converter={StaticResource Vis}}" />
+                                        <TextBlock Text="{Binding Facts}" Style="{StaticResource T.Caption}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Rodapé técnico -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasRun, Converter={StaticResource Vis}}">
+                <StackPanel>
+                    <Expander Style="{StaticResource TechDetails}" Margin="0">
+                        <Expander.Header><TextBlock Text="Como a saúde por área é calculada" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" /></Expander.Header>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,0,0,8"
+                                       Text="Cada fator converte uma medida real em nota de 0 a 100 por limites fixos. A nota da área é a média ponderada dos fatores com dados; fatores sem dados não são estimados e reduzem a confiança." />
+                            <ItemsControl ItemsSource="{Binding Index}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type d:IndexCategory}">
+                                        <StackPanel Margin="0,6,0,2">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Score, TargetNullValue=—}" Style="{StaticResource T.H3}" Foreground="{Binding Score, Converter={StaticResource ScoreBrush}, TargetNullValue=0}" />
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource T.H3}" />
+                                            </DockPanel>
+                                            <ItemsControl ItemsSource="{Binding Factors}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type d:IndexFactor}">
+                                                        <TextBlock Style="{StaticResource T.Caption}" Margin="10,2,0,0" ToolTip="{Binding Rule}">
+                                                            <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=": " /><Run Text="{Binding Measured, Mode=OneWay}" Foreground="{StaticResource B.Text}" /><Run Text=" → " /><Run Text="{Binding Score, Mode=OneWay, StringFormat=0}" />
+                                                        </TextBlock>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Expander>
+                    <Expander Style="{StaticResource TechDetails}">
+                        <Expander.Header><TextBlock Text="Verificações anteriores" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" /></Expander.Header>
+                        <ItemsControl ItemsSource="{Binding History}">
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,3" /></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Expander>
+                    <TextBlock Text="{Binding RuleErrors}" Style="{StaticResource T.WrapMuted}" FontSize="11.5" Foreground="{StaticResource B.Warning}" Margin="0,8,0,0" Visibility="{Binding RuleErrors, Converter={StaticResource Vis}}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

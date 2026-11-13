@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "storage.ntfs.lastaccess",
+      "name": { "pt": "Atualização do 'último acesso' do NTFS", "en": "NTFS last access time updates" },
+      "category": "Armazenamento",
+      "subcategory": "NTFS",
+      "technicalDescription": "Valor NtfsDisableLastAccessUpdate (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem (o mesmo que 'fsutil behavior set disablelastaccess'). O bit alto (0x80000000) indica 'gerenciado pelo sistema': 0x80000002 = gerenciado pelo sistema, atualizações habilitadas (padrão desde o Windows 10 1803); 0x80000003 = gerenciado pelo sistema, desabilitadas; 1 = desabilitado pelo usuário; 0 = habilitado pelo usuário.",
+      "plainExplanation": "O NTFS grava a data de 'último acesso' quando arquivos e pastas são lidos. Desligar evita essas gravações extras. O ganho é pequeno em SSDs, mas o ajuste é seguro para a maioria das pessoas.",
+      "evidence": "A Microsoft documenta que desabilitar melhora a velocidade de acesso a arquivos e diretórios e que o recurso pode ser necessário para backup/armazenamento remoto. No modo gerenciado pelo sistema, o Windows já desativa as atualizações em volumes grandes; por isso o ganho em PCs atuais costuma ser pequeno.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior",
+        "https://learn.microsoft.com/en-us/openspecs/windows_protocols/MS-FSA/4e3695bd-7574-4f24-a223-b4679c065b63",
+        "https://www.tenforums.com/tutorials/139015-enable-disable-ntfs-last-access-time-stamp-updates-windows-10-a-post2090389.html",
+        "https://techcommunity.microsoft.com/blog/filecab/disabling-last-access-time-in-windows-vista-to-improve-ntfs-performance/423328"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Softwares de backup incremental, arquivamento/tiering, limpeza por idade de acesso (ex.: Storage Sense 'arquivos não abertos há X dias') e algumas ferramentas forenses dependem da data de último acesso.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 17134, "notes": "Antes do Windows 10 1803 o padrão era 1 (desabilitado)." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Gerenciado pelo sistema (padrão)",
+          "notes": "0x80000002. O valor 0x80000003 (gerenciado pelo sistema, desabilitado) também é considerado padrão, pois é o próprio Windows quem escolhe.",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsDisableLastAccessUpdate", "kind": "DWord", "value": "2147483650", "equivalents": ["2147483651"] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desabilitado (usuário)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsDisableLastAccessUpdate", "kind": "DWord", "value": "1", "equivalents": ["2147483649"] }
+          ]
+        },
+        {
+          "key": "enabled",
+          "label": "Sempre habilitado (usuário)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsDisableLastAccessUpdate", "kind": "DWord", "value": "0", "equivalents": ["2147483648"] }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": "disabled",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ntfs", "filesystem", "io"],
+      "benchmarkProcedure": "Enumerar recursivamente uma árvore com 200k arquivos (Get-ChildItem -Recurse ou 'dir /s') 3 vezes, medindo tempo e gravações de disco (Monitor de Recursos) com cada opção.",
+      "origin": "Recomendação antiga da própria Microsoft (blog do time de sistema de arquivos, 2006)."
+    },
+    {
+      "id": "storage.ntfs.8dot3",
+      "name": { "pt": "Criação de nomes curtos 8.3", "en": "8.3 short name creation" },
+      "category": "Armazenamento",
+      "subcategory": "NTFS",
+      "technicalDescription": "Valor NtfsDisable8dot3NameCreation (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem: 0 = criar em todos os volumes, 1 = não criar em nenhum, 2 = configuração por volume (padrão), 3 = desativado exceto no volume do sistema. Afeta apenas arquivos novos.",
+      "plainExplanation": "O Windows cria um segundo nome curto (estilo MS-DOS, ex.: PROGRA~1) para cada arquivo. Desligar acelera pastas com muitíssimos arquivos, mas programas muito antigos podem depender desses nomes.",
+      "evidence": "A Microsoft documenta que, com 8.3 habilitado, o NTFS cria uma segunda entrada e precisa procurar nomes curtos ao criar arquivos — custo relevante em diretórios com dezenas de milhares de arquivos. Em uso doméstico típico o efeito é pequeno. Por padrão o volume do sistema geralmente já mantém 8.3 por volume.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+      ],
+      "grade": "B",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Low",
+      "sideEffects": "Instaladores/aplicativos de 16 bits ou muito antigos e alguns scripts que usam caminhos 8.3 podem falhar para arquivos criados depois da mudança. Nomes 8.3 existentes não são removidos.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Por volume (2, padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsDisable8dot3NameCreation", "kind": "DWord", "value": "2" }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado em todos os volumes (1)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsDisable8dot3NameCreation", "kind": "DWord", "value": "1" }
+          ]
+        },
+        {
+          "key": "except-system",
+          "label": "Desativado exceto no volume do sistema (3)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsDisable8dot3NameCreation", "kind": "DWord", "value": "3" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ntfs", "filesystem", "workstation"],
+      "benchmarkProcedure": "Criar 100k arquivos com nomes longos semelhantes numa pasta (script PowerShell) e cronometrar; repetir 3 vezes por opção em volume de dados.",
+      "origin": "Guias de desempenho de servidores de arquivos da Microsoft."
+    },
+    {
+      "id": "storage.trim",
+      "name": { "pt": "TRIM / notificações de exclusão (NTFS)", "en": "TRIM / delete notifications (NTFS)" },
+      "category": "Armazenamento",
+      "subcategory": "SSD",
+      "technicalDescription": "Valor DisableDeleteNotification (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem (o mesmo que 'fsutil behavior set disabledeletenotify NTFS'). 0 = TRIM/unmap habilitado (padrão).",
+      "plainExplanation": "O TRIM avisa o SSD quais blocos foram apagados, mantendo o desempenho de gravação e a vida útil. Deve ficar ligado. Este item existe para detectar e corrigir sistemas onde alguém o desligou.",
+      "evidence": "Comportamento documentado pela Microsoft (TRIM habilitado por padrão no NTFS; não requer reinício). A importância do TRIM para manter desempenho de gravação de SSDs é consenso técnico.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior",
+        "https://www.hanselman.com/blog/the-real-and-complete-story-does-windows-defragment-your-ssd"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Medium",
+      "sideEffects": "Nenhum com TRIM habilitado. A Microsoft cita raros dispositivos com degradação; nesse caso a opção 'desabilitado' existe apenas para diagnóstico.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "ReFS usa um valor separado e não é coberto por este item." },
+      "options": [
+        {
+          "key": "enabled",
+          "label": "TRIM habilitado (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "DisableDeleteNotification", "kind": "DWord", "value": "0", "equivalents": [null] }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "TRIM desabilitado (somente diagnóstico)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "DisableDeleteNotification", "kind": "DWord", "value": "1" }
+          ]
+        }
+      ],
+      "defaultOption": "enabled",
+      "recommendedOption": "enabled",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ssd", "trim", "health", "restore-default"],
+      "benchmarkProcedure": "Verificar com 'fsutil behavior query DisableDeleteNotify'. Para efeito: gravação sequencial/aleatória sustentada (CrystalDiskMark/fio) após encher e apagar 70% do SSD, com e sem TRIM.",
+      "origin": "Padrão do Windows desde o Windows 7."
+    },
+    {
+      "id": "storage.optimize.task",
+      "name": { "pt": "Otimização agendada de unidades (Retrim/Desfragmentação)", "en": "Scheduled drive optimization" },
+      "category": "Armazenamento",
+      "subcategory": "SSD",
+      "technicalDescription": "Tarefa agendada \\Microsoft\\Windows\\Defrag\\ScheduledDefrag (Otimizar Unidades). Em SSDs executa Retrim; em HDDs, desfragmentação. Em SSD com instantâneos de volume pode desfragmentar raramente (mensalmente) para limitar fragmentação de metadados.",
+      "plainExplanation": "A manutenção automática que mantém SSDs 'limpos' (Retrim) e HDDs organizados. O mito de que o Windows 'estraga o SSD desfragmentando' é falso; desligar esta tarefa é que prejudica.",
+      "evidence": "Explicação detalhada do time de armazenamento da Microsoft (via Scott Hanselman): o Storage Optimizer executa Retrim periodicamente e só desfragmenta SSD em condições específicas, de forma controlada. Desativar elimina o Retrim periódico.",
+      "references": [
+        "https://www.hanselman.com/blog/the-real-and-complete-story-does-windows-defragment-your-ssd",
+        "https://www.thewindowsclub.com/defragmentation-of-ssd-windows"
+      ],
+      "grade": "A",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "Nenhum relevante; a tarefa roda em manutenção ociosa.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "enabled",
+          "label": "Habilitada (padrão)",
+          "targets": [ { "type": "task", "taskPath": "\\Microsoft\\Windows\\Defrag\\ScheduledDefrag", "enabled": true } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desabilitada (não recomendado)",
+          "targets": [ { "type": "task", "taskPath": "\\Microsoft\\Windows\\Defrag\\ScheduledDefrag", "enabled": false } ]
+        }
+      ],
+      "defaultOption": "enabled",
+      "recommendedOption": "enabled",
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ssd", "trim", "maintenance", "myth", "restore-default"],
+      "benchmarkProcedure": "Verificar 'Otimizar Unidades' (dfrgui) mostrando 'Última execução' recente e tipo de mídia correto; para SSD, comparar desempenho de gravação após longos períodos sem Retrim.",
+      "origin": "Mito popular dos anos 2010 ('desligue a desfragmentação se tiver SSD')."
+    },
+    {
+      "id": "storage.wsearch",
+      "name": { "pt": "Serviço de indexação (Windows Search)", "en": "Windows Search indexing service" },
+      "category": "Armazenamento",
+      "subcategory": "Indexação",
+      "technicalDescription": "Tipo de inicialização do serviço WSearch (indexador). Padrão: Automático (início atrasado). Como Manual, o serviço normalmente não é iniciado por gatilho, o que equivale a desligar a indexação na prática.",
+      "plainExplanation": "O indexador permite buscas instantâneas no Iniciar, Explorador e Outlook. Desligar reduz trabalho em segundo plano, mas as buscas ficam muito mais lentas e incompletas. Prefira excluir pastas grandes da indexação.",
+      "evidence": "Não há medições confiáveis de ganho em jogos; a indexação já reduz atividade quando o usuário está ativo e em bateria. O argumento de desgaste de SSD é fraco. O impacto negativo (busca lenta, Outlook/OneNote sem pesquisa) é certo. Evidência insuficiente.",
+      "references": [
+        "https://helpdeskgeek.com/turn-off-indexing-in-windows-for-better-performance/",
+        "https://hardwarecanucks.com/forum/threads/bonkers-99-100-disk-usage-windows-11-searchindexer-exe.86388/latest"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Pesquisa do Iniciar/Explorador lenta e incompleta; Outlook (modo cache), OneNote e alguns apps perdem pesquisa rápida.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Automático (início atrasado, padrão)",
+          "targets": [ { "type": "service", "serviceName": "WSearch", "startMode": "AutomaticDelayed" } ]
+        },
+        {
+          "key": "manual",
+          "label": "Manual",
+          "targets": [ { "type": "service", "serviceName": "WSearch", "startMode": "Manual" } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado",
+          "targets": [ { "type": "service", "serviceName": "WSearch", "startMode": "Disabled" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["service", "search", "indexing", "background"],
+      "benchmarkProcedure": "Monitorar CPU/disco de SearchIndexer.exe por 30 min de uso típico (Monitor de Recursos) e frametimes em jogo durante indexação ativa (após copiar 50k arquivos).",
+      "origin": "Guias de debloat e 'SSD tweaks'."
+    },
+    {
+      "id": "storage.disk.idle",
+      "name": { "pt": "Desligar disco rígido após inatividade", "en": "Turn off hard disk after" },
+      "category": "Armazenamento",
+      "subcategory": "Energia do disco",
+      "technicalDescription": "Altera DISKIDLE (GUID 6738e2c4-e8a5-4a42-b16a-e040e769756e, subgrupo 0012ee47-9041-4b5d-9b77-535fba8b1442) no esquema ativo, em segundos. 0 = nunca.",
+      "plainExplanation": "Define quando discos rígidos (HDD) param de girar. Ao acessá-los de novo há uma espera de alguns segundos. Não afeta SSDs NVMe.",
+      "evidence": "Comportamento documentado e facilmente reproduzível: o spin-up de um HDD leva vários segundos. Útil para quem tem HDD de dados acessado de forma intermitente. Sem efeito em SSD.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/power-management-for-storage-hardware-devices-intro"
+      ],
+      "grade": "B",
+      "confidence": "High",
+      "risk": "Minimal",
+      "impact": "Low",
+      "sideEffects": "HDD girando continuamente: mais consumo, ruído e calor.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "Relevante apenas com HDD (ou SSD SATA com DIPM agressivo)." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (20 min tomada / 10 min bateria)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "0012ee47-9041-4b5d-9b77-535fba8b1442", "setting": "6738e2c4-e8a5-4a42-b16a-e040e769756e", "ac": 1200, "dc": 600, "friendlyName": "Desligar o disco rígido após" }
+          ]
+        },
+        {
+          "key": "never-ac",
+          "label": "Nunca na tomada (bateria inalterada)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "0012ee47-9041-4b5d-9b77-535fba8b1442", "setting": "6738e2c4-e8a5-4a42-b16a-e040e769756e", "ac": 0, "dc": null, "friendlyName": "Desligar o disco rígido após" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["hdd", "power", "workstation"],
+      "benchmarkProcedure": "Após 25 min ocioso, cronometrar a abertura de uma pasta no HDD de dados (3 repetições por opção).",
+      "origin": "Opção visível em Opções de Energia avançadas."
+    },
+    {
+      "id": "storage.nvme.idletimeout",
+      "name": { "pt": "Tempo para economia de energia do NVMe (APST)", "en": "Primary NVMe idle timeout" },
+      "category": "Armazenamento",
+      "subcategory": "Energia do disco",
+      "technicalDescription": "Altera a configuração oculta 'Primary NVMe Idle Timeout' (GUID d639518a-e56d-4345-8af2-b9f32fb26109, subgrupo disco) no esquema ativo, em ms. Após o tempo ocioso, o StorNVMe escolhe o estado de energia mais profundo cuja latência ENLAT+EXLAT cabe na tolerância configurada. 0 desativa a transição por ociosidade.",
+      "plainExplanation": "SSDs NVMe entram em estados de economia quando ficam parados por alguns milissegundos. Desativar pode reduzir um pequeno atraso no primeiro acesso após ociosidade, mas aumenta consumo e temperatura do SSD.",
+      "evidence": "Mecanismo documentado pela Microsoft (diretrizes de energia para NVMe). O ganho de latência real é de microssegundos a poucos milissegundos no primeiro I/O após ociosidade e não há benchmarks independentes mostrando ganho perceptível em jogos ou uso geral. Evidência insuficiente.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/power-management-for-storage-hardware-devices-nvme",
+        "https://winaero.com/add-primary-nvme-idle-timeout-to-power-options-in-windows-10/"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "SSD mais quente e maior consumo ocioso; em notebooks reduz autonomia e pode impedir estados de baixo consumo do sistema (Modern Standby).",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 17763, "notes": "Afeta apenas SSDs NVMe usando o driver da Microsoft (stornvme). Drivers de fabricante podem ignorar." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (200 ms tomada / 100 ms bateria)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "0012ee47-9041-4b5d-9b77-535fba8b1442", "setting": "d639518a-e56d-4345-8af2-b9f32fb26109", "ac": 200, "dc": 100, "friendlyName": "Primary NVMe Idle Timeout" }
+          ]
+        },
+        {
+          "key": "disabled-ac",
+          "label": "Sem economia ociosa na tomada (0)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "0012ee47-9041-4b5d-9b77-535fba8b1442", "setting": "d639518a-e56d-4345-8af2-b9f32fb26109", "ac": 0, "dc": null, "friendlyName": "Primary NVMe Idle Timeout" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["nvme", "apst", "power", "latency"],
+      "benchmarkProcedure": "Latência de leitura aleatória 4K QD1 após 2 s de ociosidade (fio/diskspd com pausas), temperatura do SSD (SMART) e consumo ocioso; 3 repetições.",
+      "origin": "Guias de latência (Calypto e derivados) e fóruns de notebooks."
+    },
+    {
+      "id": "storage.ntfs.memoryusage",
+      "name": { "pt": "Uso de memória do NTFS (NtfsMemoryUsage)", "en": "NTFS memory usage" },
+      "category": "Armazenamento",
+      "subcategory": "NTFS",
+      "technicalDescription": "Valor NtfsMemoryUsage (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem ('fsutil behavior set memoryusage'): 1 = padrão; 2 = aumenta listas lookaside e limites de pool paginado/não paginado do NTFS.",
+      "plainExplanation": "Faz o NTFS reservar mais memória interna para operações com arquivos. Pode ajudar servidores que abrem e fecham muitos arquivos; em PCs comuns pode até piorar.",
+      "evidence": "A Microsoft documenta que pode melhorar desempenho com muitos arquivos abertos repetidamente, mas também que pode reduzir o desempenho geral se o sistema já usa muita memória. Sem benchmarks de uso desktop.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-behavior"
+      ],
+      "grade": "C",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Menos pool de memória disponível para outros componentes.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (1 / ausente)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsMemoryUsage", "kind": "DWord", "value": null, "equivalents": ["1", "0"] }
+          ]
+        },
+        {
+          "key": "increased",
+          "label": "Aumentado (2)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\FileSystem", "name": "NtfsMemoryUsage", "kind": "DWord", "value": "2" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["ntfs", "memory", "server"],
+      "benchmarkProcedure": "Compilação de projeto grande ou extração de arquivo com 100k arquivos, 3 repetições, medindo tempo e pool paginado (PoolMon/Monitor de Desempenho).",
+      "origin": "Guias de tuning de servidor de arquivos."
+    }
+  ]
+}

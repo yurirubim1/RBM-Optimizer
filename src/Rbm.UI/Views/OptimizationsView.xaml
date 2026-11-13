@@ -1,0 +1,173 @@
+<UserControl x:Class="Rbm.UI.Views.OptimizationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels"
+             xmlns:tw="clr-namespace:Rbm.Core.Tweaks;assembly=Rbm.Core">
+    <UserControl.Resources>
+        <Style x:Key="StateChip" TargetType="Border" BasedOn="{StaticResource Chip}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StateKind}" Value="recommended"><Setter Property="Background" Value="{StaticResource B.SuccessSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="custom"><Setter Property="Background" Value="{StaticResource B.AccentSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="error"><Setter Property="Background" Value="{StaticResource B.DangerSoft}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="StateText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" /><Setter Property="Foreground" Value="{StaticResource B.TextMuted}" /><Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StateKind}" Value="recommended"><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="custom"><Setter Property="Foreground" Value="{StaticResource B.Cyan}" /></DataTrigger>
+                <DataTrigger Binding="{Binding StateKind}" Value="error"><Setter Property="Foreground" Value="{StaticResource B.Danger}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="28,0,28,20">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="430" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+        <!-- Resumo -->
+        <Border Grid.ColumnSpan="2" Style="{StaticResource Hero}" Margin="0,0,0,12" Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding HeroTitle}" Style="{StaticResource T.H2}" FontSize="18" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding HeroSentence}" Style="{StaticResource T.Lead}" Margin="0,4,0,0" MaxWidth="820" HorizontalAlignment="Left" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Button Content="Usar um perfil pronto" Margin="0,0,8,0" Command="{Binding DataContext.OpenProfilesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <Button Content="Reler estado" Style="{StaticResource Btn.Ghost}" Command="{Binding RefreshAllStatesCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Filtros -->
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,12">
+            <DockPanel>
+                <Border DockPanel.Dock="Left" Background="{StaticResource B.Surface}" CornerRadius="8" Padding="3" BorderBrush="{StaticResource B.Border}" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Style="{StaticResource Segment}" GroupName="om" IsChecked="True" Command="{Binding SetModeCommand}" CommandParameter="recommended" Content="Recomendados" />
+                        <RadioButton Style="{StaticResource Segment}" GroupName="om" Command="{Binding SetModeCommand}" CommandParameter="all" Content="Todos os ajustes" />
+                        <RadioButton Style="{StaticResource Segment}" GroupName="om" Command="{Binding SetModeCommand}" CommandParameter="lab" Content="Laboratório (experimental)" />
+                    </StackPanel>
+                </Border>
+                <TextBox DockPanel.Dock="Left" Width="250" Margin="12,0,0,0" Tag="Pesquisar…" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
+                <ComboBox DockPanel.Dock="Left" Width="160" Margin="10,0,0,0" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" ToolTip="Filtrar por área" />
+                <CheckBox DockPanel.Dock="Left" Content="Incluir técnicas não recomendadas" IsChecked="{Binding ShowDocOnly}" Margin="14,0,0,0" VerticalAlignment="Center"
+                          ToolTip="Mostra técnicas sem benefício comprovado ou obsoletas, apenas para consulta." />
+            </DockPanel>
+            <Border Style="{StaticResource Callout.Warn}" Margin="0,10,0,0" Visibility="{Binding ShowLab, Converter={StaticResource Vis}}">
+                <TextBlock Style="{StaticResource T.Wrap}" FontSize="12.5"
+                           Text="Laboratório: ajustes populares na internet mas SEM benefício comprovado — muitos são mitos ou dependem do PC. Teste um de cada vez, meça antes e depois (Testes de desempenho / Jogos e FPS) e desfaça se não melhorar. Não existe 'aplicar tudo'." />
+            </Border>
+        </StackPanel>
+
+        <!-- Lista -->
+        <Grid Grid.Row="2" Margin="0,0,14,0">
+            <ListBox ItemsSource="{Binding View}" SelectedItem="{Binding Selected}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:TweakItem}">
+                        <Border Background="{StaticResource B.Surface}" CornerRadius="9" Padding="14,12" Cursor="Hand">
+                            <StackPanel>
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Right" Style="{StaticResource Chip.Ok}" Visibility="{Binding IsRecommended, Converter={StaticResource Vis}}" Margin="8,0,0,0">
+                                        <TextBlock Text="Recomendado" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource B.Success}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource T.H3}" TextWrapping="Wrap" />
+                                </DockPanel>
+                                <TextBlock Text="{Binding Summary}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,4,0,0" MaxHeight="36" TextTrimming="CharacterEllipsis" />
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Border Style="{StaticResource StateChip}" Margin="0,0,6,0" MaxWidth="250"><TextBlock Text="{Binding StateText}" Style="{StaticResource StateText}" /></Border>
+                                    <Border Style="{StaticResource Chip}"><TextBlock Text="{Binding RiskWord}" FontSize="11" Foreground="{Binding M.Risk, Converter={StaticResource LevelBrush}}" /></Border>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel VerticalAlignment="Top" Margin="0,40,0,0" Visibility="{Binding ListEmpty, Converter={StaticResource Vis}}">
+                <TextBlock Text="&#xE721;" Style="{StaticResource EmptyIcon}" />
+                <TextBlock Text="Nenhum ajuste encontrado com esses filtros." Style="{StaticResource T.Lead}" TextAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Detalhes -->
+        <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource Card}" Margin="0" Padding="0" Visibility="{Binding Selected, Converter={StaticResource Vis}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,20">
+                <StackPanel DataContext="{Binding Selected}">
+                    <TextBlock Text="{Binding Category}" Style="{StaticResource T.Caption}" />
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource T.H2}" FontSize="20" TextWrapping="Wrap" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding M.PlainExplanation}" Style="{StaticResource T.Lead}" Margin="0,8,0,0" />
+
+                    <!-- Fatos rápidos em linguagem simples -->
+                    <WrapPanel Margin="0,14,0,0">
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6"><TextBlock Text="{Binding RiskWord}" FontSize="11.5" Foreground="{Binding M.Risk, Converter={StaticResource LevelBrush}}" /></Border>
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6"><TextBlock Text="{Binding EvidenceWord}" FontSize="11.5" Foreground="{Binding M.Grade, Converter={StaticResource LevelBrush}}" /></Border>
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6"><TextBlock Text="{Binding ImpactWord}" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" /></Border>
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6"><TextBlock Text="{Binding RestartWord}" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" /></Border>
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6" Visibility="{Binding NeedsAdmin, Converter={StaticResource Vis}}"><TextBlock Text="Pede permissão de administrador" FontSize="11.5" Foreground="{StaticResource B.TextMuted}" /></Border>
+                    </WrapPanel>
+
+                    <!-- Estado atual + ação -->
+                    <Border Style="{StaticResource CardInner}" Margin="0,10,0,0" Padding="16,14">
+                        <StackPanel>
+                            <TextBlock Text="COMO ESTÁ AGORA" Style="{StaticResource T.Overline}" />
+                            <TextBlock Text="{Binding StateText}" Style="{StaticResource T.H3}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding RecommendedText}" Style="{StaticResource T.Base}" Foreground="{StaticResource B.Cyan}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding CompatReason}" Style="{StaticResource T.Caption}" Margin="0,2,0,0" />
+                            <TextBlock Text="ESCOLHA COMO DEIXAR" Style="{StaticResource T.Overline}" Margin="0,14,0,6" />
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Aplicar" Style="{StaticResource Btn.Primary}" Margin="10,0,0,0" Padding="18,7"
+                                        Command="{Binding DataContext.ApplyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                        IsEnabled="{Binding IsBlocked, Converter={StaticResource Not}}" />
+                                <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}" IsEnabled="{Binding IsBlocked, Converter={StaticResource Not}}">
+                                    <ComboBox.ItemTemplate><DataTemplate DataType="{x:Type tw:TweakOption}"><TextBlock Text="{Binding Label}" /></DataTemplate></ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </DockPanel>
+                            <TextBlock Text="{Binding SelectedOption.Notes}" Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,6,0,0" />
+                            <Button Content="Desfazer a alteração feita pelo RBM" HorizontalAlignment="Left" Margin="0,10,0,0" Style="{StaticResource Btn.Ghost}" Padding="0,4"
+                                    Command="{Binding DataContext.RevertLatestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                    Visibility="{Binding HasActiveChange, Converter={StaticResource Vis}}" Foreground="{StaticResource B.Accent}" />
+                            <TextBlock Text="Esta técnica é obsoleta ou contraindicada: o RBM apenas a documenta e não permite aplicá-la." Style="{StaticResource T.WrapMuted}" Foreground="{StaticResource B.Danger}" Margin="0,8,0,0"
+                                       Visibility="{Binding IsBlocked, Converter={StaticResource Vis}}" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Style="{StaticResource T.Caption}" Margin="2,8,0,0" TextWrapping="Wrap"
+                               Text="Antes de mudar, o RBM salva como estava. Depois, confere se a mudança realmente aconteceu — se algo falhar, desfaz sozinho." />
+
+                    <TextBlock Text="Possíveis efeitos colaterais" Style="{StaticResource T.H3}" Margin="0,18,0,4" Visibility="{Binding M.SideEffects, Converter={StaticResource Vis}}" />
+                    <TextBlock Text="{Binding M.SideEffects}" Style="{StaticResource T.WrapMuted}" />
+                    <TextBlock Text="O que se sabe sobre o benefício" Style="{StaticResource T.H3}" Margin="0,16,0,4" />
+                    <TextBlock Text="{Binding M.Evidence}" Style="{StaticResource T.WrapMuted}" />
+                    <TextBlock Text="Como medir se ajudou" Style="{StaticResource T.H3}" Margin="0,16,0,4" Visibility="{Binding M.BenchmarkProcedure, Converter={StaticResource Vis}}" />
+                    <TextBlock Text="{Binding M.BenchmarkProcedure}" Style="{StaticResource T.WrapMuted}" />
+
+                    <Expander Style="{StaticResource TechDetails}" Margin="0,18,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{Binding M.Id}" Style="{StaticResource T.Caption}" FontFamily="{StaticResource F.Mono}" />
+                            <TextBlock Text="{Binding GradeText, StringFormat=Grau de evidência: {0}}" Style="{StaticResource T.Caption}" Margin="0,4,0,0" />
+                            <TextBlock Text="Descrição técnica" Style="{StaticResource T.H3}" Margin="0,10,0,4" />
+                            <TextBlock Text="{Binding M.TechnicalDescription}" Style="{StaticResource T.WrapMuted}" FontSize="12" />
+                            <TextBlock Text="O que é alterado no sistema" Style="{StaticResource T.H3}" Margin="0,10,0,4" />
+                            <TextBlock Text="{Binding TargetsText}" Style="{StaticResource T.WrapMuted}" FontFamily="{StaticResource F.Mono}" FontSize="11.5" />
+                            <TextBlock Text="Valores lidos agora" Style="{StaticResource T.H3}" Margin="0,10,0,4" />
+                            <TextBlock Text="{Binding ReadingsText}" Style="{StaticResource T.WrapMuted}" FontFamily="{StaticResource F.Mono}" FontSize="11.5" />
+                            <TextBlock Text="{Binding DepsText}" Style="{StaticResource T.Caption}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding M.Origin, StringFormat=Origem: {0}}" Style="{StaticResource T.Caption}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="Referências" Style="{StaticResource T.H3}" Margin="0,10,0,4" />
+                            <ItemsControl ItemsSource="{Binding M.References}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource Btn.Ghost}" Padding="0,2" HorizontalAlignment="Left" ToolTip="Abrir no navegador"
+                                                Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <TextBlock Text="{Binding}" Foreground="{StaticResource B.Accent}" TextTrimming="CharacterEllipsis" FontSize="12" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

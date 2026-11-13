@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Rbm.Agent/Rbm.Agent.csproj" />
+    <Project Path="src/Rbm.Benchmarks/Rbm.Benchmarks.csproj" />
+    <Project Path="src/Rbm.Core/Rbm.Core.csproj" />
+    <Project Path="src/Rbm.Data/Rbm.Data.csproj" />
+    <Project Path="src/Rbm.Diagnostics/Rbm.Diagnostics.csproj" />
+    <Project Path="src/Rbm.Drivers/Rbm.Drivers.csproj" />
+    <Project Path="src/Rbm.Gaming/Rbm.Gaming.csproj" />
+    <Project Path="src/Rbm.Hardware/Rbm.Hardware.csproj" />
+    <Project Path="src/Rbm.Latency/Rbm.Latency.csproj" />
+    <Project Path="src/Rbm.Monitoring/Rbm.Monitoring.csproj" />
+    <Project Path="src/Rbm.Network/Rbm.Network.csproj" />
+    <Project Path="src/Rbm.Optimization/Rbm.Optimization.csproj" />
+    <Project Path="src/Rbm.Processes/Rbm.Processes.csproj" />
+    <Project Path="src/Rbm.Restore/Rbm.Restore.csproj" />
+    <Project Path="src/Rbm.Security/Rbm.Security.csproj" />
+    <Project Path="src/Rbm.StudioLauncher/Rbm.StudioLauncher.csproj" />
+    <Project Path="src/Rbm.UI/Rbm.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Rbm.Tests/Rbm.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,538 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "lab.bcd.useplatformclock",
+      "name": { "pt": "Forçar HPET como relógio de desempenho (useplatformclock)", "en": "Force platform clock (HPET) — useplatformclock" },
+      "category": "Advanced Lab",
+      "subcategory": "Temporizadores (BCD)",
+      "technicalDescription": "Elemento BCD useplatformclock = yes no {current}: força o uso do relógio de plataforma (normalmente HPET) como contador de desempenho (QueryPerformanceCounter) em vez do TSC invariante. Removido (padrão) = o Windows escolhe a melhor fonte, tipicamente TSC invariante a 10 MHz.",
+      "plainExplanation": "Obriga o Windows a usar um relógio de hardware antigo e lento (HPET) para medir tempo. Em PCs modernos isso torna cada leitura de tempo muito mais cara e costuma causar stutter. O padrão (valor removido) é o correto.",
+      "evidence": "A Microsoft documenta que esta opção deve ser usada somente para depuração. Leituras de HPET custam ordens de grandeza mais que TSC; medições de comunidade (TimerBench, Blur Busters, Overclockers.at) mostram a troca do contador de 10 MHz (TSC) para a frequência do HPET (ex.: 14,318 ou 19,2 MHz) e regressões de frametime em vários sistemas. O 'tweak' útil historicamente era REMOVER o valor (padrão). Contraindicado.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set",
+        "https://forums.blurbusters.com/viewtopic.php?p=88181",
+        "https://overclockers.at/printable/number-crunching/the-hpet-bug-what-it-is-and-what-it-isnt_251222/page_4",
+        "https://sites.google.com/view/melodystweaks/misconceptions-about-timers-hpet-tsc-pmt"
+      ],
+      "grade": "E",
+      "confidence": "High",
+      "risk": "High",
+      "impact": "Medium",
+      "sideEffects": "Aumento do custo de QueryPerformanceCounter, stutter e queda de FPS em jogos que consultam o tempo com frequência.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": ["lab.bcd.useplatformtick"],
+      "compatibility": { "minBuild": 10240, "notes": "Em sistemas com BitLocker, alterações no BCD podem exigir a chave de recuperação." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Removido (padrão — Windows escolhe TSC)",
+          "targets": [ { "type": "bcd", "element": "useplatformclock", "value": null } ]
+        },
+        {
+          "key": "forced",
+          "label": "Forçar relógio de plataforma (yes)",
+          "targets": [ { "type": "bcd", "element": "useplatformclock", "value": "yes" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "bcd", "hpet", "timer", "myth", "restore-default"],
+      "benchmarkProcedure": "Confirmar a frequência de QueryPerformanceFrequency (10 MHz = TSC invariante; 14,318/19,2/24 MHz = HPET); CapFrameX em 3 jogos (1% e 0,1% low) e custo de QPC com micro-benchmark.",
+      "origin": "Guias antigos de 'ative o HPET para mais FPS' (Neowin 2012) e o oposto ('desative o HPET')."
+    },
+    {
+      "id": "lab.bcd.useplatformtick",
+      "name": { "pt": "Tick do relógio de plataforma (useplatformtick)", "en": "Platform tick — useplatformtick" },
+      "category": "Advanced Lab",
+      "subcategory": "Temporizadores (BCD)",
+      "technicalDescription": "Elemento BCD useplatformtick = yes: força o tick do relógio a ser gerado por uma fonte de plataforma, sem temporizadores sintéticos. Disponível desde o Windows 8.",
+      "plainExplanation": "Muda a fonte que gera o 'tique-taque' interno do Windows. Alguns guias dizem que melhora a consistência; não há medições confiáveis, e há relatos de piora.",
+      "evidence": "Microsoft: somente para depuração. Relatos de fórum mistos (alguns percebem melhora subjetiva, outros relatam perda de desempenho single-core desde o Windows 10 1803). Sem benchmarks controlados.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set",
+        "https://forums.blurbusters.com/viewtopic.php?p=106464"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Medium",
+      "impact": "Unknown",
+      "sideEffects": "Possível aumento de consumo ocioso e regressões de desempenho relatadas.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": ["lab.bcd.useplatformclock"],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Removido (padrão)",
+          "targets": [ { "type": "bcd", "element": "useplatformtick", "value": null } ]
+        },
+        {
+          "key": "yes",
+          "label": "Forçar tick de plataforma (yes)",
+          "targets": [ { "type": "bcd", "element": "useplatformtick", "value": "yes" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "bcd", "timer"],
+      "benchmarkProcedure": "LatencyMon 10 min, consumo ocioso do pacote e CapFrameX em 3 jogos (3 execuções), reiniciando entre estados.",
+      "origin": "Guias de latência (Calypto e derivados)."
+    },
+    {
+      "id": "lab.bcd.disabledynamictick",
+      "name": { "pt": "Desativar tick dinâmico (disabledynamictick)", "en": "Disable dynamic tick" },
+      "category": "Advanced Lab",
+      "subcategory": "Temporizadores (BCD)",
+      "technicalDescription": "Elemento BCD disabledynamictick = yes: desativa o tick dinâmico (tickless idle), fazendo o timer do kernel disparar periodicamente mesmo quando a CPU está ociosa.",
+      "plainExplanation": "Faz o Windows 'acordar' a CPU em intervalos fixos, mesmo sem nada para fazer. Guias de latência afirmam que isso deixa o sistema mais consistente; o custo certo é mais consumo e temperatura em repouso.",
+      "evidence": "Microsoft: somente para depuração. Recomendado em guias de latência (Calypto), mas sem benchmarks controlados de frametime/latência de entrada. Aumento de consumo ocioso é esperado pelo mecanismo; relatos de +poucos °C.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set",
+        "https://docs.google.com/document/d/1c2-lUJq74wuYK1WrA_bIvgb89dUN0sj8-hO3vqmrau4/mobilebasic",
+        "https://forums.blurbusters.com/viewtopic.php?p=61984"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Medium",
+      "impact": "Unknown",
+      "sideEffects": "Maior consumo e temperatura em ociosidade; em notebooks, menos bateria e possível interferência com Modern Standby.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Removido (tick dinâmico ativo, padrão)",
+          "targets": [ { "type": "bcd", "element": "disabledynamictick", "value": null } ]
+        },
+        {
+          "key": "yes",
+          "label": "Tick dinâmico desativado (yes)",
+          "targets": [ { "type": "bcd", "element": "disabledynamictick", "value": "yes" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "bcd", "timer", "latency"],
+      "benchmarkProcedure": "LatencyMon 10 min; consumo ocioso do pacote (HWiNFO) por 10 min; CapFrameX em 3 jogos e teste de latência de clique (LDAT/câmera 1000 fps) se disponível.",
+      "origin": "Calypto's Latency Guide e derivados."
+    },
+    {
+      "id": "lab.bcd.tscsyncpolicy",
+      "name": { "pt": "Política de sincronização do TSC (tscsyncpolicy)", "en": "TSC synchronization policy" },
+      "category": "Advanced Lab",
+      "subcategory": "Temporizadores (BCD)",
+      "technicalDescription": "Elemento BCD tscsyncpolicy = Default | Legacy | Enhanced: controla a política de sincronização do contador de timestamp entre processadores.",
+      "plainExplanation": "Ajusta como o Windows sincroniza o relógio interno entre os núcleos. Em CPUs modernas o TSC já é sincronizado por hardware; não há evidência de ganho.",
+      "evidence": "Microsoft: somente para depuração. Nenhuma medição confiável de benefício; explicações de fórum sobre 'Enhanced' não são oficiais.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/bcdedit--set",
+        "https://forums.tomshardware.com/threads/what-does-the-command-bcdedit-set-tscsyncpolicy-legacy-do.3668385"
+      ],
+      "grade": "D",
+      "confidence": "Medium",
+      "risk": "Medium",
+      "impact": "Unknown",
+      "sideEffects": "Desconhecidos; possíveis inconsistências de temporização em plataformas com TSC problemático.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Removido (padrão)",
+          "targets": [ { "type": "bcd", "element": "tscsyncpolicy", "value": null } ]
+        },
+        {
+          "key": "enhanced",
+          "label": "Enhanced",
+          "targets": [ { "type": "bcd", "element": "tscsyncpolicy", "value": "Enhanced" } ]
+        },
+        {
+          "key": "legacy",
+          "label": "Legacy",
+          "targets": [ { "type": "bcd", "element": "tscsyncpolicy", "value": "Legacy" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "bcd", "tsc", "timer", "myth"],
+      "benchmarkProcedure": "CapFrameX em 3 jogos e LatencyMon, reiniciando entre estados.",
+      "origin": "Guias de latência e fóruns (Tom's Hardware, Blur Busters)."
+    },
+    {
+      "id": "lab.timer.globalrequests",
+      "name": { "pt": "Resolução de timer global (GlobalTimerResolutionRequests)", "en": "Global timer resolution requests" },
+      "category": "Advanced Lab",
+      "subcategory": "Temporizadores",
+      "technicalDescription": "Valor GlobalTimerResolutionRequests (DWORD) = 1 em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel. Desde o Windows 10 2004, timeBeginPeriod/NtSetTimerResolution afetam só o processo chamador; com este valor (Windows 11/Server 2022+), as solicitações voltam a valer para o sistema inteiro.",
+      "plainExplanation": "Faz com que um programa que pede um timer mais preciso (ex.: 0,5 ms) aplique isso ao PC todo, como era antes do Windows 10 2004. Sozinho não faz nada: precisa de um programa pedindo a resolução. Aumenta consumo de energia.",
+      "evidence": "A Microsoft documenta a mudança para resolução por processo e, no Windows 11, a perda de garantia para janelas ocultas/minimizadas, alertando que alta resolução reduz desempenho geral e impede economia de energia. O valor do registro não é documentado oficialmente; o próprio autor do TimerResolution diz que deve ser usado apenas para depuração. Ganhos relatados (precisão de Sleep, frame pacing com limitadores) são de comunidade e dependentes do jogo.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows/win32/api/timeapi/nf-timeapi-timebeginperiod",
+        "https://github.com/valleyofdoom/TimerResolution",
+        "https://community.pcgamingwiki.com/files/file/2563-global-timer-resolution-requests-windows-11",
+        "https://www.wagnardsoft.com/forums/viewtopic.php?p=11479"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Medium",
+      "impact": "Unknown",
+      "sideEffects": "Qualquer processo que peça alta resolução passa a afetar o sistema todo: mais interrupções de clock, maior consumo e menos estados ociosos profundos.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 22000, "notes": "Somente Windows 11 / Server 2022 ou superior." },
+      "options": [
+        {
+          "key": "default",
+          "label": "Por processo (padrão, valor ausente)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", "name": "GlobalTimerResolutionRequests", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "global",
+          "label": "Solicitações globais (1)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\kernel", "name": "GlobalTimerResolutionRequests", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "timer", "resolution", "latency", "power"],
+      "benchmarkProcedure": "MeasureSleep (valleyofdoom) para desvio de Sleep(1); 'powercfg /energy' para ver solicitações de timer; CapFrameX com limitador de FPS em 2 jogos; consumo ocioso.",
+      "origin": "Projetos TimerResolution (valleyofdoom/amitxv), Blur Busters, PCGamingWiki."
+    },
+    {
+      "id": "lab.cpu.win32priorityseparation",
+      "name": { "pt": "Win32PrioritySeparation (quantum e boost de primeiro plano)", "en": "Win32PrioritySeparation" },
+      "category": "Advanced Lab",
+      "subcategory": "Agendador",
+      "technicalDescription": "Valor Win32PrioritySeparation (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl. 6 bits AABBCC: AA (bits 4–5) duração do quantum (1 longo, 2 curto, 0/3 padrão = curto no cliente); BB (bits 2–3) variável/fixo (1 variável, 2 fixo, 0/3 padrão = variável no cliente); CC (bits 0–1) boost do quantum de primeiro plano (0 = 1x, 1 = 2x, 2 = 3x; ignorado com quantum fixo). Padrão 2 (0x02) ≡ 38 (0x26) no Windows cliente: curto, variável, 3x. 26 (0x1A) ≡ 24 (0x18) = longo, fixo. 40 (0x28) ≡ 42 (0x2A) = curto, fixo.",
+      "plainExplanation": "Controla quanto tempo cada programa roda antes de o Windows trocar para outro e quanto o app em primeiro plano é favorecido. Guias prometem menos input lag com valores como 26, 38 ou 40, mas 38 é idêntico ao padrão e não há medições confiáveis mostrando ganho.",
+      "evidence": "O significado dos bits é documentado (TechNet/blog Microsoft 'Master your quantum'; Windows Internals). Há vídeos de benchmark da comunidade, sem metodologia controlada publicada; nenhum estudo independente demonstra redução de latência. Vários valores populares são equivalentes entre si ou ao padrão.",
+      "references": [
+        "https://learn.microsoft.com/en-us/archive/blogs/embedded/master-your-quantum",
+        "https://technet.microsoft.com/library/Cc976120",
+        "https://www.github.com/LuSlower/win32ps-changer",
+        "https://recapio.com/digest/boost-pc-performance-win32-priority-separation-benchmarks-by-khorvie-tech"
+      ],
+      "grade": "C",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Quantum fixo/longo reduz o favorecimento do app em primeiro plano (pode piorar a responsividade da interface com cargas de fundo); quantum curto aumenta trocas de contexto.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240, "notes": "A interpretação 'padrão' (0/3) difere entre Windows cliente e Server." },
+      "options": [
+        {
+          "key": "default",
+          "label": "2 (padrão: curto, variável, 3x) — idêntico a 38",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\PriorityControl", "name": "Win32PrioritySeparation", "kind": "DWord", "value": "2", "equivalents": ["38"] } ]
+        },
+        {
+          "key": "long-fixed",
+          "label": "26 (0x1A: longo, fixo) — idêntico a 24 ('Serviços em segundo plano')",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\PriorityControl", "name": "Win32PrioritySeparation", "kind": "DWord", "value": "26", "equivalents": ["24"] } ]
+        },
+        {
+          "key": "short-fixed",
+          "label": "40 (0x28: curto, fixo) — idêntico a 42",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\PriorityControl", "name": "Win32PrioritySeparation", "kind": "DWord", "value": "40", "equivalents": ["42"] } ]
+        },
+        {
+          "key": "long-variable-1x",
+          "label": "28 (0x1C: longo, variável padrão, sem boost)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\PriorityControl", "name": "Win32PrioritySeparation", "kind": "DWord", "value": "28" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "scheduler", "quantum", "myth"],
+      "benchmarkProcedure": "CapFrameX em 3 jogos com carga de fundo controlada (ex.: compressão 7-Zip com 2 threads), 5 execuções por valor; latência de clique-a-fóton se houver equipamento.",
+      "origin": "Configuração de 'Ajustar para melhor desempenho de: Programas/Serviços' (sysdm.cpl); guias de latência."
+    },
+    {
+      "id": "lab.cpu.powerthrottling",
+      "name": { "pt": "Desativar Power Throttling (EcoQoS) globalmente", "en": "Disable power throttling globally" },
+      "category": "Advanced Lab",
+      "subcategory": "Energia",
+      "technicalDescription": "Valor PowerThrottlingOff (DWORD) = 1 em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling (chave ausente por padrão). Desativa a limitação de energia (EcoQoS/modo de eficiência) aplicada pelo Windows a processos em segundo plano.",
+      "plainExplanation": "O Windows reduz o consumo de programas em segundo plano (modo de eficiência). Desligar isso faz tudo rodar 'a todo vapor', gastando mais energia. O jogo em primeiro plano não é limitado, então o ganho em jogos é improvável.",
+      "evidence": "Mecanismo documentado (EcoQoS: até 90% menos consumo de CPU para trabalho em segundo plano). Não há benchmarks mostrando ganho em aplicativos em primeiro plano; útil apenas para casos específicos de processos de fundo limitados indevidamente (há opção por processo no Gerenciador de Tarefas).",
+      "references": [
+        "https://devblogs.microsoft.com/sustainable-software/introducing-ecoqos/",
+        "https://winaero.com/disable-power-throttling-windows-10-1709",
+        "https://learn.microsoft.com/en-us/answers/questions/4052040/efficiency-mode-causing-performance-issue"
+      ],
+      "grade": "C",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Maior consumo e temperatura; menos bateria em notebooks.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 16299 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Power Throttling ativo (padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling", "name": "PowerThrottlingOff", "kind": "DWord", "value": null, "equivalents": ["0"] } ]
+        },
+        {
+          "key": "off",
+          "label": "Desativado globalmente",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling", "name": "PowerThrottlingOff", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "power", "ecoqos", "background"],
+      "benchmarkProcedure": "Tempo de uma tarefa de fundo (ex.: compilação minimizada) e consumo do pacote; CapFrameX em jogo com tarefa de fundo, 3 execuções.",
+      "origin": "Guias desde o Windows 10 1709."
+    },
+    {
+      "id": "lab.cpu.coreparking",
+      "name": { "pt": "Desativar estacionamento de núcleos (core parking)", "en": "Disable core parking" },
+      "category": "Advanced Lab",
+      "subcategory": "Energia",
+      "technicalDescription": "Altera CPMINCORES (GUID 0cc5b647-c1df-4637-891a-dec35c318583) no esquema ativo: % mínimo de processadores lógicos não estacionados. 100% desativa o algoritmo de core parking.",
+      "plainExplanation": "O Windows 'estaciona' núcleos ociosos para economizar energia. Desativar mantém todos acordados. Em muitos sistemas (ex.: AMD com driver de chipset, plano Alto desempenho) isso já é o padrão na tomada.",
+      "evidence": "Comportamento documentado pela Microsoft, que recomenda alterar parâmetros de core parking apenas com orientação do fabricante do processador. Ganhos relatados (ParkControl, fóruns) são anedóticos; desestacionar tudo pode reduzir headroom de boost em cargas leves. Evidência insuficiente.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-core-parking-cpmincores",
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/static-configuration-options-for-core-parking",
+        "https://learn.microsoft.com/en-us/archive/blogs/klince/tweaking-cpu-core-parking"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Maior consumo ocioso; em CPUs híbridas pode interferir na política de contenção de E-cores.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão genérico do Equilibrado (10% / 10%)",
+          "notes": "O padrão varia por plataforma: pacotes PPM de fabricantes (ex.: AMD) usam 100% na tomada; o plano Alto desempenho usa 100%. A reversão do app usa o snapshot.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "0cc5b647-c1df-4637-891a-dec35c318583", "ac": 10, "dc": 10, "friendlyName": "Núcleos mínimos de estacionamento" }
+          ]
+        },
+        {
+          "key": "unparked-ac",
+          "label": "Sem estacionamento na tomada (100%), bateria inalterada",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "0cc5b647-c1df-4637-891a-dec35c318583", "ac": 100, "dc": null, "friendlyName": "Núcleos mínimos de estacionamento" }
+          ]
+        },
+        {
+          "key": "unparked-all",
+          "label": "Sem estacionamento sempre (100% / 100%)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "0cc5b647-c1df-4637-891a-dec35c318583", "ac": 100, "dc": 100, "friendlyName": "Núcleos mínimos de estacionamento" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "power", "core-parking"],
+      "benchmarkProcedure": "Monitor de Recursos (núcleos estacionados), CapFrameX em 3 jogos (1% low), Cinebench single-core e consumo ocioso; 3 execuções.",
+      "origin": "Bitsum ParkControl, guias de jogos."
+    },
+    {
+      "id": "lab.cpu.minstate",
+      "name": { "pt": "Estado mínimo do processador em 100%", "en": "Minimum processor state 100%" },
+      "category": "Advanced Lab",
+      "subcategory": "Energia",
+      "technicalDescription": "Altera PROCTHROTTLEMIN (GUID 893dee8e-2bef-41e0-89c6-b55d0929964c) no esquema ativo. 100% pede ao motor de desempenho que nunca reduza a frequência abaixo do máximo nominal.",
+      "plainExplanation": "Mantém a CPU sempre na frequência alta, mesmo parada. Em processadores modernos (que mudam de frequência em microssegundos), isso só gera calor e consumo; não há ganho de FPS comprovado.",
+      "evidence": "Em CPUs com CPPC/HWP, a rampa de frequência é controlada pelo hardware em escala de ms ou menos; não há benchmarks mostrando ganho, e o aumento de temperatura pode reduzir o boost sustentado. Placebo na maioria dos sistemas.",
+      "references": [
+        "https://learn.microsoft.com/en-us/windows-hardware/customize/power-settings/options-for-perf-state-engine-perfenergypreference"
+      ],
+      "grade": "D",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Maior consumo e temperatura ociosos; ventoinhas mais altas; menos headroom térmico para boost.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão genérico do Equilibrado (5% / 5%)",
+          "notes": "Alguns pacotes PPM usam 0% na tomada; o plano Alto desempenho usa 100%.",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "893dee8e-2bef-41e0-89c6-b55d0929964c", "ac": 5, "dc": 5, "friendlyName": "Estado mínimo do processador" }
+          ]
+        },
+        {
+          "key": "max-ac",
+          "label": "100% na tomada (bateria inalterada)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "893dee8e-2bef-41e0-89c6-b55d0929964c", "ac": 100, "dc": null, "friendlyName": "Estado mínimo do processador" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "power", "myth"],
+      "benchmarkProcedure": "CapFrameX em 3 jogos + temperatura/consumo ociosos e em carga; 3 execuções.",
+      "origin": "Guias de 'máximo desempenho' e planos de energia de terceiros."
+    },
+    {
+      "id": "lab.cpu.idledisable",
+      "name": { "pt": "Desativar estados ociosos do processador (C-states)", "en": "Disable processor idle states" },
+      "category": "Advanced Lab",
+      "subcategory": "Energia",
+      "technicalDescription": "Altera IDLEDISABLE (GUID 5d76a2ca-e8c0-402f-a133-2158492d58ad) no esquema ativo: 1 impede que a CPU entre em estados ociosos (C-states) via sistema operacional, mantendo os núcleos em polling.",
+      "plainExplanation": "Impede a CPU de 'descansar'. Ela fica 100% ativa o tempo todo, esquentando muito e gastando muita energia. Pode até reduzir desempenho porque o boost depende de núcleos ociosos frios.",
+      "evidence": "Mecanismo conhecido; usado em nichos de latência extrema (áudio profissional/benchmarks) com resfriamento dedicado. Para uso geral é contraindicado: consumo e temperatura elevados e redução do boost oportunista. Nenhum ganho demonstrado em jogos.",
+      "references": [],
+      "grade": "E",
+      "confidence": "Medium",
+      "risk": "High",
+      "impact": "Unknown",
+      "sideEffects": "Consumo ocioso muito maior, temperaturas altas constantes, ventoinhas no máximo, menor boost e possível redução da vida útil de componentes em notebooks.",
+      "restart": "None",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Estados ociosos habilitados (padrão)",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "5d76a2ca-e8c0-402f-a133-2158492d58ad", "ac": 0, "dc": 0, "friendlyName": "Desativação da ociosidade do processador" }
+          ]
+        },
+        {
+          "key": "disabled-idle",
+          "label": "Ociosidade desativada",
+          "targets": [
+            { "type": "power", "scheme": "active", "subgroup": "54533251-82be-4824-96c1-47b60b740d00", "setting": "5d76a2ca-e8c0-402f-a133-2158492d58ad", "ac": 1, "dc": 1, "friendlyName": "Desativação da ociosidade do processador" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "power", "c-states", "unsafe"],
+      "benchmarkProcedure": "Não recomendado. Se avaliado: consumo e temperatura ociosos, Cinebench single-core e CapFrameX, com monitoramento térmico contínuo.",
+      "origin": "Guias de latência extrema."
+    },
+    {
+      "id": "lab.process.csrsspriority",
+      "name": { "pt": "Prioridade alta para csrss.exe via IFEO", "en": "High priority for csrss.exe via IFEO PerfOptions" },
+      "category": "Advanced Lab",
+      "subcategory": "Prioridade de processos",
+      "technicalDescription": "Valores CpuPriorityClass=4 (Alta) e IoPriority=3 (Alta) em HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions. Tenta elevar a prioridade do processo crítico csrss.exe (que participa do processamento de entrada).",
+      "plainExplanation": "Truque que tenta dar prioridade máxima a um processo de sistema para 'reduzir input lag'. O csrss.exe é um processo protegido e crítico; não há evidência de efeito, e mexer em IFEO de processos do sistema é algo que antivírus tratam como suspeito.",
+      "evidence": "Sem documentação oficial de PerfOptions para processos protegidos; nenhuma medição confiável de redução de latência. O processamento de entrada moderno ocorre majoritariamente no kernel (win32k) e em threads de alta prioridade já existentes. Contraindicado: mexe em processo crítico e em uma chave (IFEO) usada por malware para persistência.",
+      "references": [],
+      "grade": "E",
+      "confidence": "Medium",
+      "risk": "High",
+      "impact": "Unknown",
+      "sideEffects": "Alertas de soluções de segurança; possível instabilidade; nenhum benefício comprovado.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Sem PerfOptions (padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "name": "CpuPriorityClass", "kind": "DWord", "value": null },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "name": "IoPriority", "kind": "DWord", "value": null }
+          ]
+        },
+        {
+          "key": "high",
+          "label": "CPU e E/S altas (tweak popular)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "name": "CpuPriorityClass", "kind": "DWord", "value": "4" },
+            { "type": "registry", "hive": "HKLM", "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "name": "IoPriority", "kind": "DWord", "value": "3" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "priority", "ifeo", "myth", "unsafe"],
+      "benchmarkProcedure": "Não recomendado. Se avaliado: verificar no Process Explorer se a prioridade mudou de fato; latência clique-a-fóton com equipamento dedicado.",
+      "origin": "Pacotes de 'tweaks de input lag' (YouTube/Discord)."
+    },
+    {
+      "id": "lab.memory.disablepagingexecutive",
+      "name": { "pt": "Manter kernel e drivers na RAM (DisablePagingExecutive)", "en": "Disable paging executive" },
+      "category": "Advanced Lab",
+      "subcategory": "Memória",
+      "technicalDescription": "Valor DisablePagingExecutive (DWORD) = 1 em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management: impede a paginação para disco de código/dados pagináveis do kernel e drivers.",
+      "plainExplanation": "Força partes do Windows a nunca irem para o arquivo de paginação. Era útil com pouca RAM e discos lentos nos anos 2000; hoje o Windows raramente pagina o kernel em PCs com RAM suficiente, então não há diferença perceptível.",
+      "evidence": "Ajuste herdado da era XP; com 16 GB+ e SSD, a paginação do executivo é rara e de baixo custo. Não há benchmarks modernos demonstrando ganho. Pode aumentar pressão de memória em sistemas com pouca RAM.",
+      "references": [],
+      "grade": "D",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Menos memória disponível para aplicativos em sistemas com pouca RAM; útil apenas para depuração de drivers.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Paginação permitida (0, padrão)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management", "name": "DisablePagingExecutive", "kind": "DWord", "value": "0", "equivalents": [null] } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Executivo sempre na RAM (1)",
+          "targets": [ { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management", "name": "DisablePagingExecutive", "kind": "DWord", "value": "1" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": true,
+      "privacy": false,
+      "tags": ["lab", "memory", "legacy", "myth"],
+      "benchmarkProcedure": "Contador 'Bytes de Pool Paginado' e 'Falhas de página/s' do sistema sob carga de jogo + navegador; CapFrameX 3 execuções.",
+      "origin": "Guias de otimização da era Windows XP."
+    }
+  ]
+}

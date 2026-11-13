@@ -1,0 +1,247 @@
+<UserControl x:Class="Rbm.UI.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Rbm.UI.Controls"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels">
+    <UserControl.Resources>
+        <!-- Chip do resumo conforme o estado -->
+        <Style x:Key="HealthChipStyle" TargetType="Border" BasedOn="{StaticResource Chip.Info}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HealthKind}" Value="ok"><Setter Property="Background" Value="{StaticResource B.SuccessSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="warn"><Setter Property="Background" Value="{StaticResource B.WarningSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="danger"><Setter Property="Background" Value="{StaticResource B.DangerSoft}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HealthChipText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource B.Info}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HealthKind}" Value="ok"><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="warn"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="danger"><Setter Property="Foreground" Value="{StaticResource B.Danger}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HealthIcon" TargetType="TextBlock" BasedOn="{StaticResource T.Icon}">
+            <Setter Property="FontSize" Value="30" /><Setter Property="Text" Value="&#xE9F5;" /><Setter Property="Foreground" Value="{StaticResource B.Info}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HealthKind}" Value="ok"><Setter Property="Text" Value="&#xE930;" /><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="warn"><Setter Property="Text" Value="&#xE7BA;" /><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HealthKind}" Value="danger"><Setter Property="Text" Value="&#xEA39;" /><Setter Property="Foreground" Value="{StaticResource B.Danger}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <StackPanel>
+            <!-- ===== Resumo ===== -->
+            <Border Style="{StaticResource Hero}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="58" Height="58" CornerRadius="16" Background="#14FFFFFF" VerticalAlignment="Top" Margin="0,2,18,0">
+                        <TextBlock Style="{StaticResource HealthIcon}" HorizontalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Style="{StaticResource HealthChipStyle}"><TextBlock Text="{Binding HealthChip}" Style="{StaticResource HealthChipText}" /></Border>
+                            <TextBlock Text="{Binding LastCheck}" Style="{StaticResource T.Caption}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding HealthTitle}" Style="{StaticResource T.H1}" FontSize="21" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding HealthSentence}" Style="{StaticResource T.Lead}" Margin="0,4,0,0" MaxWidth="760" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <Button Content="Ver diagnóstico completo" Style="{StaticResource Btn.Primary}" Command="{Binding GoCommand}" CommandParameter="diagnostics" />
+                        <Button Content="Verificar novamente" Margin="0,8,0,0" Command="{Binding RunDiagnosticsCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="1.35*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+                <!-- ===== O que fazer agora ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="O que fazer agora" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Do mais importante para o menos importante." Style="{StaticResource T.Caption}" Margin="0,2,0,12" />
+                        <StackPanel Visibility="{Binding Actions.Count, Converter={StaticResource VisInv}}" Margin="0,6,0,6">
+                            <TextBlock Text="&#xE930;" Style="{StaticResource EmptyIcon}" Foreground="{StaticResource B.Success}" />
+                            <TextBlock Text="Nada urgente por aqui." Style="{StaticResource T.H3}" HorizontalAlignment="Center" />
+                            <TextBlock Text="Use os atalhos ao lado para limpar arquivos ou aplicar uma otimização segura." Style="{StaticResource T.Lead}" TextAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Actions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ActionItem}">
+                                    <Border Style="{StaticResource CardInner}" Margin="0,0,0,8" Padding="14,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <Border Width="4" CornerRadius="2" Background="{Binding Severity, Converter={StaticResource LevelBrush}}" Margin="0,0,12,0" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource T.H3}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Detail}" Style="{StaticResource T.WrapMuted}" FontSize="12.5" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Content="{Binding ButtonText}" VerticalAlignment="Center" Margin="12,0,0,0" Padding="12,6"
+                                                    Command="{Binding DataContext.GoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding NavigateKey}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Atalhos ===== -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Atalhos" Style="{StaticResource T.H2}" Margin="0,0,0,12" />
+                        <UniformGrid Columns="2">
+                            <Button Style="{StaticResource Btn.Tile}" Margin="0,0,8,8" Command="{Binding GoCommand}" CommandParameter="cleanup">
+                                <StackPanel>
+                                    <TextBlock Text="&#xEA99;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.Cyan}" FontSize="20" />
+                                    <TextBlock Text="Liberar espaço" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                    <TextBlock Text="Apaga só temporários seguros" Style="{StaticResource T.Caption}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Btn.Tile}" Margin="0,0,0,8" Command="{Binding GoCommand}" CommandParameter="profiles">
+                                <StackPanel>
+                                    <TextBlock Text="&#xE9E9;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.Accent}" FontSize="20" />
+                                    <TextBlock Text="Otimizar com segurança" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                    <TextBlock Text="Perfis prontos, com prévia" Style="{StaticResource T.Caption}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Btn.Tile}" Margin="0,0,8,0" Command="{Binding GoCommand}" CommandParameter="space">
+                                <StackPanel>
+                                    <TextBlock Text="&#xEB05;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.Violet}" FontSize="20" />
+                                    <TextBlock Text="O que ocupa o disco" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                    <TextBlock Text="Mapa visual de pastas" Style="{StaticResource T.Caption}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Btn.Tile}" Margin="0,0,0,8" Command="{Binding GoCommand}" CommandParameter="gaming">
+                                <StackPanel>
+                                    <TextBlock Text="&#xE7FC;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.Success}" FontSize="20" />
+                                    <TextBlock Text="Medir FPS de um jogo" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                    <TextBlock Text="Sem injeção, seguro p/ anticheat" Style="{StaticResource T.Caption}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Btn.Tile}" Margin="0,0,8,0" Command="{Binding GoCommand}" CommandParameter="startup">
+                                <StackPanel>
+                                    <TextBlock Text="&#xE7E8;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.Warning}" FontSize="20" />
+                                    <TextBlock Text="Iniciar o Windows mais rápido" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                    <TextBlock Text="Revise o que abre junto" Style="{StaticResource T.Caption}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Btn.Tile}" Command="{Binding GoCommand}" CommandParameter="history">
+                                <StackPanel>
+                                    <TextBlock Text="&#xE7A7;" Style="{StaticResource T.Icon}" Foreground="{StaticResource B.TextMuted}" FontSize="20" />
+                                    <TextBlock Text="Desfazer alterações" Style="{StaticResource T.H3}" Margin="0,8,0,0" />
+                                    <TextBlock Text="Tudo que o RBM mudou" Style="{StaticResource T.Caption}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Button>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ===== Agora ===== -->
+            <TextBlock Text="Agora" Style="{StaticResource T.Section}" />
+            <UniformGrid Columns="4">
+                <Border Style="{StaticResource Card}" Padding="16,14">
+                    <DockPanel>
+                        <c:RingGauge DockPanel.Dock="Left" Width="74" Height="74" Value="{Binding Cpu}" Text="{Binding CpuText}" Stroke="{StaticResource B.CyanGradient}" Thickness="7" />
+                        <StackPanel Margin="12,2,0,0">
+                            <TextBlock Text="Processador" Style="{StaticResource T.H3}" />
+                            <TextBlock Text="{Binding CpuWord}" Style="{StaticResource T.Muted}" FontSize="12.5" />
+                            <TextBlock Text="{Binding CpuDetail}" Style="{StaticResource T.Caption}" />
+                            <c:SparkChart Height="26" Margin="0,6,0,0" Values="{Binding CpuSeries}" Maximum="100" Capacity="120" Stroke="{StaticResource B.Cyan}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Padding="16,14">
+                    <DockPanel>
+                        <c:RingGauge DockPanel.Dock="Left" Width="74" Height="74" Value="{Binding Gpu}" Text="{Binding GpuText}" Stroke="{StaticResource B.AccentGradient}" Thickness="7" />
+                        <StackPanel Margin="12,2,0,0">
+                            <TextBlock Text="Placa de vídeo" Style="{StaticResource T.H3}" />
+                            <TextBlock Text="{Binding GpuWord}" Style="{StaticResource T.Muted}" FontSize="12.5" />
+                            <TextBlock Text="{Binding GpuDetail}" Style="{StaticResource T.Caption}" />
+                            <c:SparkChart Height="26" Margin="0,6,0,0" Values="{Binding GpuSeries}" Maximum="100" Capacity="120" Stroke="{StaticResource B.Violet}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Padding="16,14">
+                    <DockPanel>
+                        <c:RingGauge DockPanel.Dock="Left" Width="74" Height="74" Value="{Binding Ram}" Text="{Binding RamText}" Stroke="{StaticResource B.Accent}" Thickness="7" />
+                        <StackPanel Margin="12,2,0,0">
+                            <TextBlock Text="Memória RAM" Style="{StaticResource T.H3}" />
+                            <TextBlock Text="{Binding RamWord}" Style="{StaticResource T.Muted}" FontSize="12.5" />
+                            <TextBlock Text="{Binding RamDetail}" Style="{StaticResource T.Caption}" />
+                            <c:SparkChart Height="26" Margin="0,6,0,0" Values="{Binding RamSeries}" Maximum="100" Capacity="120" Stroke="{StaticResource B.Accent}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Padding="16,14">
+                    <DockPanel>
+                        <c:RingGauge DockPanel.Dock="Left" Width="74" Height="74" Value="{Binding Vram}" Text="{Binding VramText}" Stroke="{StaticResource B.Violet}" Thickness="7" />
+                        <StackPanel Margin="12,2,0,0">
+                            <TextBlock Text="Memória de vídeo" Style="{StaticResource T.H3}" />
+                            <TextBlock Text="{Binding VramWord}" Style="{StaticResource T.Muted}" FontSize="12.5" />
+                            <TextBlock Text="{Binding VramDetail}" Style="{StaticResource T.Caption}" />
+                            <c:SparkChart Height="26" Margin="0,6,0,0" Values="{Binding VramSeries}" Maximum="100" Capacity="120" Stroke="{StaticResource B.Violet}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </UniformGrid>
+            <Border Style="{StaticResource Card}" Padding="16,10">
+                <WrapPanel>
+                    <TextBlock Style="{StaticResource T.Muted}" Margin="0,0,28,0"><Run Text="&#xE9CA;" FontFamily="{StaticResource F.Icons}" /> <Run Text="Temperaturas:" /> <Run Text="{Binding TempsText, Mode=OneWay}" Foreground="{StaticResource B.Text}" /></TextBlock>
+                    <TextBlock Style="{StaticResource T.Muted}" Margin="0,0,28,0"><Run Text="&#xEDA2;" FontFamily="{StaticResource F.Icons}" /> <Run Text="Disco:" /> <Run Text="{Binding DiskText, Mode=OneWay}" Foreground="{StaticResource B.Text}" /></TextBlock>
+                    <TextBlock Style="{StaticResource T.Muted}"><Run Text="&#xE968;" FontFamily="{StaticResource F.Icons}" /> <Run Text="Internet:" /> <Run Text="{Binding NetText, Mode=OneWay}" Foreground="{StaticResource B.Text}" /></TextBlock>
+                </WrapPanel>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="1.15*" /></Grid.ColumnDefinitions>
+                <!-- ===== Saúde por área ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Saúde por área" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="Passe o mouse sobre uma área para ver o que foi medido." Style="{StaticResource T.Caption}" Margin="0,2,0,10" />
+                        <ItemsControl ItemsSource="{Binding Areas}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:HealthArea}">
+                                    <Grid Margin="0,6" Background="Transparent" ToolTip="{Binding Tooltip}">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="190" /><ColumnDefinition Width="*" /><ColumnDefinition Width="80" /></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource T.Base}" VerticalAlignment="Center" />
+                                        <ProgressBar Grid.Column="1" Maximum="100" Value="{Binding Score, Mode=OneWay, TargetNullValue=0}" Foreground="{Binding Score, Converter={StaticResource ScoreBrush}, TargetNullValue=0}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Word}" Style="{StaticResource T.H3}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{Binding Score, Converter={StaticResource ScoreBrush}, TargetNullValue=0}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Isto avalia a condição do PC (espaço, temperatura, estabilidade…), não é um placar de velocidade." Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+                <!-- ===== Meu computador ===== -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MachineTitle}" Style="{StaticResource T.H2}" />
+                        <TextBlock Text="{Binding MachineSubtitle}" Style="{StaticResource T.Caption}" Margin="0,2,0,8" />
+                        <ItemsControl ItemsSource="{Binding Identity}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:InfoRow}">
+                                    <Grid Margin="0,5">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="115" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Label}" Style="{StaticResource T.Muted}" FontSize="12.5" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Value}" Style="{StaticResource T.H3}" ToolTip="{Binding Value}" />
+                                            <TextBlock Text="{Binding Hint}" Style="{StaticResource T.Caption}" ToolTip="{Binding Hint}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding SensorNote}" Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,8,0,0" Visibility="{Binding SensorNote, Converter={StaticResource Vis}}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

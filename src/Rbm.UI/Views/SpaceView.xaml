@@ -1,0 +1,362 @@
+<UserControl x:Class="Rbm.UI.Views.SpaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sp="clr-namespace:Rbm.UI.Pages.Space"
+             xmlns:vm="clr-namespace:Rbm.UI.ViewModels">
+    <UserControl.Resources>
+        <Style x:Key="ToneChip" TargetType="Border" BasedOn="{StaticResource Chip.Info}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HeroTone}" Value="ok"><Setter Property="Background" Value="{StaticResource B.SuccessSoft}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HeroTone}" Value="warn"><Setter Property="Background" Value="{StaticResource B.WarningSoft}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ToneText" TargetType="TextBlock" BasedOn="{StaticResource T.Base}">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource B.Info}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HeroTone}" Value="ok"><Setter Property="Foreground" Value="{StaticResource B.Success}" /></DataTrigger>
+                <DataTrigger Binding="{Binding HeroTone}" Value="warn"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="StatLabel" TargetType="TextBlock" BasedOn="{StaticResource T.Caption}" />
+        <Style x:Key="StatValue" TargetType="TextBlock" BasedOn="{StaticResource T.H2}">
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,0,16,20">
+        <StackPanel>
+            <!-- ===== Banner: escolha do disco ===== -->
+            <Border Style="{StaticResource Hero}">
+                <StackPanel>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                            <Button Command="{Binding BrowseCommand}" IsEnabled="{Binding CanStart}" ToolTip="Escolher qualquer pasta para analisar (ex.: Downloads)">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8B7;" Style="{StaticResource T.Icon}" FontSize="13" Margin="0,0,8,0" />
+                                    <TextBlock Text="Escolher pasta…" />
+                                </StackPanel>
+                            </Button>
+                            <Button Margin="8,0,0,0" Command="{Binding CancelCommand}" Visibility="{Binding IsScanning, Converter={StaticResource Vis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE711;" Style="{StaticResource T.Icon}" FontSize="12" Margin="0,0,8,0" />
+                                    <TextBlock Text="Cancelar" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel>
+                            <Border Style="{StaticResource ToneChip}">
+                                <TextBlock Text="{Binding HeroChip}" Style="{StaticResource ToneText}" />
+                            </Border>
+                            <TextBlock Text="{Binding HeroTitle}" Style="{StaticResource T.H1}" FontSize="22" Margin="0,8,0,0" ToolTip="{Binding HeroTitle}" />
+                            <TextBlock Text="{Binding HeroText}" Style="{StaticResource T.Lead}" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- Discos (entrada principal) -->
+                    <ItemsControl ItemsSource="{Binding Drives}" Margin="0,14,0,0" Visibility="{Binding Drives.Count, Converter={StaticResource Vis}}">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type sp:SpaceDrive}">
+                                <Button Style="{StaticResource Btn.Tile}" Margin="0,0,10,8" Width="270" ToolTip="Analisar este disco (somente leitura)"
+                                        Command="{Binding DataContext.ScanDriveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                        IsEnabled="{Binding DataContext.CanStart, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                        <Border Width="38" Height="38" CornerRadius="9" Background="{StaticResource B.AccentSoft}" VerticalAlignment="Top" Margin="0,0,12,0">
+                                            <TextBlock Text="&#xEDA2;" Style="{StaticResource T.Icon}" FontSize="18" Foreground="{StaticResource B.Cyan}" HorizontalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding UsedText}" Style="{StaticResource T.Caption}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource T.H3}" />
+                                            </DockPanel>
+                                            <ProgressBar Height="6" Maximum="100" Value="{Binding UsedPercent, Mode=OneWay}" Margin="0,6,0,5">
+                                                <ProgressBar.Style>
+                                                    <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsLow}" Value="True"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ProgressBar.Style>
+                                            </ProgressBar>
+                                            <TextBlock Text="{Binding FreeLine}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource T.Caption}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsLow}" Value="True"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Progresso -->
+                    <StackPanel Margin="0,6,0,0" Visibility="{Binding IsScanning, Converter={StaticResource Vis}}">
+                        <ProgressBar IsIndeterminate="True" />
+                        <TextBlock Text="{Binding ProgressText}" Style="{StaticResource T.H3}" FontSize="12.5" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding ProgressPath}" Style="{StaticResource T.Caption}" Margin="0,2,0,0" ToolTip="{Binding ProgressPath}" />
+                    </StackPanel>
+
+                    <!-- Opções avançadas: caminho manual, modo de tamanho e varredura como administrador -->
+                    <Expander Style="{StaticResource TechDetails}">
+                        <Expander.Header><TextBlock Text="Opções avançadas" Foreground="{StaticResource B.TextMuted}" FontSize="12.5" /></Expander.Header>
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" IsEnabled="{Binding CanStart}"
+                                         ToolTip="Pasta ou unidade a analisar (ex.: C:\ ou C:\Users\voce\Downloads)" />
+                                <Button Grid.Column="1" Style="{StaticResource Btn.Primary}" Margin="8,0,0,0" Command="{Binding ScanCommand}" IsEnabled="{Binding CanStart}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE721;" Style="{StaticResource T.Icon}" FontSize="13" Foreground="White" Margin="0,0,8,0" />
+                                        <TextBlock Text="Analisar este caminho" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <WrapPanel Margin="0,10,0,0">
+                                <Border Background="{StaticResource B.Surface2}" CornerRadius="8" Padding="3" Margin="0,0,10,6" VerticalAlignment="Center"
+                                        ToolTip="Tamanho dos arquivos: soma como no Explorer. Espaço real no disco: considera compactação, arquivos esparsos e arquivos do OneDrive só na nuvem. Vale para a próxima análise.">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton Style="{StaticResource Segment}" GroupName="spaceMode" Content="Tamanho dos arquivos" IsChecked="{Binding UseAllocated, Converter={StaticResource Not}}" IsEnabled="{Binding CanStart}" />
+                                        <RadioButton Style="{StaticResource Segment}" GroupName="spaceMode" Content="Espaço real no disco" IsChecked="{Binding UseAllocated}" IsEnabled="{Binding CanStart}" />
+                                    </StackPanel>
+                                </Border>
+                                <Button Margin="0,0,0,6" Command="{Binding ScanElevatedCommand}" IsEnabled="{Binding CanStart}" ToolTip="{Binding ElevationExplanation}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xEA18;" Style="{StaticResource T.Icon}" FontSize="13" Foreground="{StaticResource B.Warning}" Margin="0,0,8,0" />
+                                        <TextBlock Text="Analisar como administrador" />
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                            <TextBlock Text="{Binding ElevationExplanation}" Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Border>
+
+            <!-- Aviso: pastas sem acesso -->
+            <Border Style="{StaticResource Callout.Warn}" Margin="0,0,12,12" Visibility="{Binding SuggestElevated, Converter={StaticResource Vis}}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="&#xE72E;" Style="{StaticResource T.Icon}" FontSize="15" Foreground="{StaticResource B.Warning}" VerticalAlignment="Top" Margin="0,2,12,0" />
+                    <Button DockPanel.Dock="Right" Margin="12,0,0,0" VerticalAlignment="Center" Command="{Binding ScanElevatedCommand}" IsEnabled="{Binding CanStart}" ToolTip="{Binding ElevationExplanation}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xEA18;" Style="{StaticResource T.Icon}" FontSize="13" Foreground="{StaticResource B.Warning}" Margin="0,0,8,0" />
+                            <TextBlock Text="Analisar como administrador" />
+                        </StackPanel>
+                    </Button>
+                    <StackPanel Background="Transparent" ToolTip="{Binding InaccessibleTip}" ToolTipService.ShowDuration="60000">
+                        <TextBlock Style="{StaticResource T.H3}" TextWrapping="Wrap" TextTrimming="None">
+                            <Run Text="{Binding InaccessibleText, Mode=OneWay}" /><Run Text=" pasta(s) não puderam ser lidas sem permissão de administrador" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Margin="0,2,0,0"
+                                   Text="O tamanho delas não entra no total (ex.: pontos de restauração do Windows). Passe o mouse aqui para ver quais são." />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ===== Resumo do resultado ===== -->
+            <Border Style="{StaticResource Card}" Padding="16,12" Visibility="{Binding HasResult, Converter={StaticResource Vis}}">
+                <StackPanel>
+                    <UniformGrid Rows="1">
+                        <StackPanel>
+                            <TextBlock Text="Total analisado" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding TotalText}" Style="{StaticResource StatValue}" Foreground="{StaticResource B.Cyan}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Arquivos" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding FilesText}" Style="{StaticResource StatValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Pastas" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding FoldersText}" Style="{StaticResource StatValue}" />
+                        </StackPanel>
+                        <StackPanel Background="Transparent" ToolTip="{Binding InaccessibleTip}" ToolTipService.ShowDuration="60000">
+                            <TextBlock Text="Sem acesso" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding InaccessibleText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource StatValue}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasInaccessible}" Value="True"><Setter Property="Foreground" Value="{StaticResource B.Warning}" /></DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Tempo da análise" Style="{StaticResource StatLabel}" />
+                            <TextBlock Text="{Binding DurationText}" Style="{StaticResource StatValue}" />
+                        </StackPanel>
+                    </UniformGrid>
+                    <TextBlock Style="{StaticResource T.Caption}" Margin="0,10,0,0" TextWrapping="Wrap">
+                        <Run Text="{Binding SourceText, Mode=OneWay}" /><Run Text=" · medido como " /><Run Text="{Binding ModeText, Mode=OneWay}" /><Run Text=" · somente leitura: nada foi alterado." />
+                    </TextBlock>
+                    <TextBlock Text="{Binding ResultNote}" Style="{StaticResource T.WrapMuted}" FontSize="11.5" Margin="0,4,0,0"
+                               Visibility="{Binding ResultNote, Converter={StaticResource Vis}}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ===== Mapa + lista ===== -->
+            <Grid Height="580">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="380" /></Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}" Padding="14">
+                    <DockPanel>
+                        <!-- Trilha -->
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" Visibility="{Binding HasResult, Converter={StaticResource Vis}}">
+                            <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Icon}" Content="&#xE74A;" Command="{Binding UpCommand}" IsEnabled="{Binding CanGoUp}"
+                                    ToolTip="Voltar um nível (ou clique com o botão direito no mapa)" Margin="0,0,6,0" />
+                            <Button DockPanel.Dock="Right" Style="{StaticResource Btn.Ghost}" Padding="10,5" FontSize="12" Command="{Binding OpenCurrentInExplorerCommand}"
+                                    ToolTip="Abrir a pasta atual no Explorer">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE838;" Style="{StaticResource T.Icon}" FontSize="12" Foreground="{StaticResource B.TextMuted}" Margin="0,0,6,0" />
+                                    <TextBlock Text="Abrir no Explorer" />
+                                </StackPanel>
+                            </Button>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Center">
+                                <ItemsControl ItemsSource="{Binding Crumbs}">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type sp:SpaceCrumb}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button x:Name="crumb" Style="{StaticResource Btn.Ghost}" Padding="6,4" FontSize="12.5" Content="{Binding Title}"
+                                                        Command="{Binding DataContext.GoCrumbCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                                <TextBlock x:Name="sep" Text="&#xE76C;" Style="{StaticResource T.Icon}" FontSize="9" Foreground="{StaticResource B.TextFaint}" Margin="2,0" />
+                                            </StackPanel>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsLast}" Value="True">
+                                                    <Setter TargetName="sep" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="crumb" Property="Foreground" Value="{StaticResource B.Text}" />
+                                                    <Setter TargetName="crumb" Property="FontWeight" Value="SemiBold" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+
+                        <!-- Legenda -->
+                        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Legend}" Margin="0,10,0,0" Visibility="{Binding HasResult, Converter={StaticResource Vis}}">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type sp:LegendEntry}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,14,2">
+                                        <Border Width="10" Height="10" CornerRadius="2" Background="{Binding Brush}" Opacity="0.85" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Label}" Style="{StaticResource T.Caption}" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid>
+                            <sp:TreemapControl Root="{Binding Current}" SelectedNode="{Binding Selected}" DrillCommand="{Binding DrillCommand}" UpCommand="{Binding UpCommand}" />
+                            <!-- Estado vazio -->
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="440" Visibility="{Binding HasResult, Converter={StaticResource VisInv}}">
+                                <TextBlock Text="&#xEDA2;" Style="{StaticResource EmptyIcon}" FontSize="40" />
+                                <TextBlock Text="O mapa aparece aqui" Style="{StaticResource T.H2}" HorizontalAlignment="Center" />
+                                <TextBlock Style="{StaticResource T.WrapMuted}" TextAlignment="Center" Margin="0,6,0,0"
+                                           Text="Escolha um disco acima. Cada bloco representa uma pasta ou arquivo — quanto maior o bloco, mais espaço ele ocupa. Clique numa pasta para entrar nela; botão direito volta um nível." />
+                                <Button Style="{StaticResource Btn.Primary}" HorizontalAlignment="Center" Margin="0,14,0,0" Command="{Binding ScanCommand}" IsEnabled="{Binding CanStart}"
+                                        Visibility="{Binding IsScanning, Converter={StaticResource VisInv}}">
+                                    <TextBlock>
+                                        <Run Text="Analisar " /><Run Text="{Binding TargetPath, Mode=OneWay}" />
+                                    </TextBlock>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <!-- ===== Lista + detalhes ===== -->
+                <Border Grid.Column="1" Style="{StaticResource Card}" Padding="14">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="2,0,0,8">
+                            <TextBlock Text="Maiores itens desta pasta" Style="{StaticResource T.H2}" />
+                            <TextBlock Text="{Binding CurrentDetail}" Style="{StaticResource T.Caption}" Margin="0,2,0,0" ToolTip="{Binding CurrentDetail}" />
+                        </StackPanel>
+
+                        <!-- Detalhes da seleção -->
+                        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                            <Border Style="{StaticResource CardInner}" Visibility="{Binding HasSelection, Converter={StaticResource Vis}}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelName}" Style="{StaticResource T.H3}" ToolTip="{Binding SelName}" />
+                                    <TextBlock Text="{Binding SelKind}" Style="{StaticResource T.Caption}" Foreground="{StaticResource B.Cyan}" Margin="0,2,0,0" />
+                                    <TextBlock Text="{Binding SelPath}" Style="{StaticResource T.Caption}" TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" ToolTip="{Binding SelPath}" />
+                                    <TextBlock Margin="0,6,0,0" Style="{StaticResource T.Base}" FontSize="12.5">
+                                        <Run Text="{Binding SelSize, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="  " /><Run Text="{Binding SelShare, Mode=OneWay}" Foreground="{StaticResource B.TextMuted}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding SelCounts}" Style="{StaticResource T.Caption}" Visibility="{Binding SelCounts, Converter={StaticResource Vis}}" />
+                                    <Button Margin="0,10,0,0" HorizontalAlignment="Left" Command="{Binding OpenSelectedInExplorerCommand}" ToolTip="Mostra o item no Explorer (não altera nada)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE838;" Style="{StaticResource T.Icon}" FontSize="12" Margin="0,0,8,0" />
+                                            <TextBlock Text="Mostrar no Explorer" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="12" Visibility="{Binding HasSelection, Converter={StaticResource VisInv}}"
+                                       Text="Clique num item para ver detalhes. Duplo clique numa pasta para entrar nela." />
+                            <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="8" Background="{StaticResource B.Surface2}">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource Btn.Ghost}" Padding="8,4" FontSize="12" Content="Ir para Limpeza" Command="{Binding GoCleanupCommand}" VerticalAlignment="Center" />
+                                    <TextBlock Style="{StaticResource T.WrapMuted}" FontSize="11.5" LineHeight="16"
+                                               Text="Aqui você só vê o espaço. Para liberar espaço com segurança, use a Limpeza." />
+                                </DockPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <Grid>
+                            <DataGrid x:Name="ItemsGrid" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedRow}" CanUserSortColumns="True"
+                                      MouseDoubleClick="ItemsGrid_MouseDoubleClick" HorizontalScrollBarVisibility="Disabled"
+                                      Visibility="{Binding HasResult, Converter={StaticResource Vis}}">
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="{StaticResource B.Text}" /></Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Nome" Width="*" MinWidth="130" SortMemberPath="Name">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate DataType="{x:Type sp:SpaceItemRow}">
+                                                <DockPanel ToolTip="{Binding Tip}" Background="Transparent">
+                                                    <Border DockPanel.Dock="Left" Width="4" Height="16" CornerRadius="2" Background="{Binding Swatch}" Margin="0,0,8,0" />
+                                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Icon}" Style="{StaticResource T.Icon}" FontSize="12" Foreground="{StaticResource B.TextMuted}" Margin="0,0,6,0" />
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource T.Base}" FontSize="12.5" VerticalAlignment="Center" />
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Size" Width="78" />
+                                    <DataGridTemplateColumn Header="%" Width="58" SortMemberPath="Percent">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate DataType="{x:Type sp:SpaceItemRow}">
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding PercentText}" Style="{StaticResource T.Base}" FontSize="11.5" />
+                                                    <ProgressBar Height="3" Maximum="100" Value="{Binding Percent, Mode=OneWay}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Arquivos" Binding="{Binding FilesText}" SortMemberPath="Files" Width="66" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding HasResult, Converter={StaticResource VisInv}}">
+                                <TextBlock Text="&#xE8B7;" Style="{StaticResource EmptyIcon}" />
+                                <TextBlock Text="Nada analisado ainda" Style="{StaticResource T.H3}" HorizontalAlignment="Center" />
+                                <TextBlock Text="A lista das maiores pastas aparece aqui." Style="{StaticResource T.Caption}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

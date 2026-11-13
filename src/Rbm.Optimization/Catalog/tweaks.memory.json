@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "memory.largesystemcache",
+      "name": { "pt": "Cache de sistema grande (LargeSystemCache)", "en": "Large system cache" },
+      "category": "Memória",
+      "subcategory": "Gerenciador de memória",
+      "technicalDescription": "Valor LargeSystemCache (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management. 0 = perfil de estação de trabalho (padrão no Windows cliente), 1 = favorece o cache de arquivos do sistema (perfil de servidor de arquivos da era Windows 2000/2003).",
+      "plainExplanation": "Um ajuste antigo de servidor que manda o Windows guardar mais arquivos em cache em vez de deixar memória para os programas. Em PCs modernos não acelera nada e pode piorar jogos e aplicativos.",
+      "evidence": "Documentação e blogs da Microsoft da era Vista/2008 respondem 'Não' à pergunta se deve ser alterado; a equipe de desempenho da Microsoft documentou problemas de cache de sistema excessivo; há relatos históricos de corrupção/instabilidade com drivers antigos. Gerenciador de memória moderno ajusta o cache dinamicamente. Obsoleto e contraindicado.",
+      "references": [
+        "https://learn.microsoft.com/en-us/archive/blogs/sankim/largesystemcache",
+        "https://techcommunity.microsoft.com/t5/ask-the-performance-team/prf-memory-management-large-system-cache-issues/ba-p/373756",
+        "https://tweaks.com/windows/37573/incorrect-tweak-enable-large-system-cache/"
+      ],
+      "grade": "E",
+      "confidence": "High",
+      "risk": "Medium",
+      "impact": "Negligible",
+      "sideEffects": "Pode reduzir a memória disponível para aplicativos e jogos, aumentando paginação; relatos históricos de instabilidade com alguns drivers.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Estação de trabalho (0, padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management", "name": "LargeSystemCache", "kind": "DWord", "value": "0", "equivalents": [null] }
+          ]
+        },
+        {
+          "key": "large",
+          "label": "Cache grande (1, obsoleto)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management", "name": "LargeSystemCache", "kind": "DWord", "value": "1" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["memory", "legacy", "myth", "obsolete"],
+      "benchmarkProcedure": "Não recomendado aplicar. Se testado: comparar 'Memória disponível' e falhas de página (Monitor de Desempenho) e frametimes com CapFrameX sob carga de jogo + cópia de arquivos grande.",
+      "origin": "Guias de 'otimização' da era Windows XP copiados até hoje."
+    },
+    {
+      "id": "memory.svchost.splitthreshold",
+      "name": { "pt": "Limite de separação de processos svchost", "en": "Svchost split threshold" },
+      "category": "Memória",
+      "subcategory": "Serviços",
+      "technicalDescription": "Valor SvcHostSplitThresholdInKB (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control. Padrão 3670016 (0x380000 KB ≈ 3,5 GB). Acima desse total de RAM, o Windows 10 1703+ executa cada serviço em seu próprio svchost.exe; valores maiores que a RAM instalada voltam ao agrupamento antigo.",
+      "plainExplanation": "Reduz a quantidade de processos 'Host de Serviço' no Gerenciador de Tarefas agrupando serviços. Parece mais 'limpo', mas não traz ganho real e piora o isolamento: se um serviço trava, derruba os outros do grupo.",
+      "evidence": "A Microsoft documenta que a separação foi feita para confiabilidade, segurança e diagnóstico, com custo de memória pequeno. Não há benchmarks mostrando ganho de desempenho perceptível ao reagrupar; os guias que o recomendam se baseiam na contagem de processos, não em medições. Placebo.",
+      "references": [
+        "https://learn.microsoft.com/windows/application-management/svchost-service-refactoring",
+        "https://winaero.com/set-split-threshold-svchost-windows-10/",
+        "https://www.ninjaone.com/blog/change-the-svchost-exe-split-threshold"
+      ],
+      "grade": "D",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Menor isolamento entre serviços (falha de um serviço afeta o grupo), diagnóstico mais difícil.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 15063 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Padrão (3,5 GB)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control", "name": "SvcHostSplitThresholdInKB", "kind": "DWord", "value": "3670016", "equivalents": [null] }
+          ]
+        },
+        {
+          "key": "grouped",
+          "label": "Agrupar sempre (limite máximo)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control", "name": "SvcHostSplitThresholdInKB", "kind": "DWord", "value": "4294967295" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["memory", "services", "svchost", "myth"],
+      "benchmarkProcedure": "Medir 'Confirmado' e 'Em uso' de memória após boot ocioso (média de 3 boots) e frametimes em jogo; a diferença esperada é de dezenas de MB, sem efeito em FPS.",
+      "origin": "Guias de debloat (Reddit, YouTube) a partir de 2017."
+    },
+    {
+      "id": "memory.prefetcher",
+      "name": { "pt": "Prefetcher de inicialização e aplicativos", "en": "Boot and application prefetcher" },
+      "category": "Memória",
+      "subcategory": "Pré-carregamento",
+      "technicalDescription": "Valor EnablePrefetcher (DWORD) em HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management\\PrefetchParameters: 0 desligado, 1 aplicativos, 2 boot, 3 ambos (padrão). O prefetcher registra os acessos de inicialização de cada programa e os agrupa em leituras maiores na próxima execução.",
+      "plainExplanation": "Recurso que ajuda programas e o Windows a abrir mais rápido lembrando o que eles leem do disco. Em SSD o ganho é menor, mas desligar não acelera nada.",
+      "evidence": "Não existe benchmark que mostre ganho ao desligar; o argumento de 'desgaste do SSD' não é sustentado por medições (os arquivos .pf são pequenos). O próprio Windows adapta o comportamento quando o disco de sistema é SSD. Há relato de que, em builds recentes, o valor 0 nem sempre tem efeito. Placebo/contraproducente em HDD.",
+      "references": [
+        "https://www.thewindowsclub.com/disable-superfetch-prefetch-ssd",
+        "https://winbuzzer.com/2024/01/02/windows-10-how-to-disable-enable-prefetch-and-superfetch-xcxwbt/",
+        "https://deskmodder.de/phpBB3/viewtopic.php?p=318501"
+      ],
+      "grade": "D",
+      "confidence": "Medium",
+      "risk": "Low",
+      "impact": "Negligible",
+      "sideEffects": "Abertura de programas e boot podem ficar mais lentos, especialmente em HDD.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 10240 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Boot + aplicativos (3, padrão)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management\\PrefetchParameters", "name": "EnablePrefetcher", "kind": "DWord", "value": "3" }
+          ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desligado (0)",
+          "targets": [
+            { "type": "registry", "hive": "HKLM", "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management\\PrefetchParameters", "name": "EnablePrefetcher", "kind": "DWord", "value": "0" }
+          ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["memory", "prefetch", "ssd", "myth"],
+      "benchmarkProcedure": "Cronometrar boot até área de trabalho utilizável (BootRacer ou xbootmgr) e abertura a frio de 5 aplicativos, 3 repetições por estado.",
+      "origin": "Guias de 'SSD tweaks' da era Windows 7."
+    },
+    {
+      "id": "memory.sysmain",
+      "name": { "pt": "Serviço SysMain (antigo Superfetch)", "en": "SysMain service (Superfetch)" },
+      "category": "Memória",
+      "subcategory": "Pré-carregamento",
+      "technicalDescription": "Tipo de inicialização do serviço SysMain. O serviço mantém o cache de pré-carregamento (Superfetch/standby list priorizada), gerencia o prefetcher e participa da compressão de memória.",
+      "plainExplanation": "Serviço que pré-carrega na memória os programas que você usa com frequência. Em PCs com HDD ou pouca RAM ajuda; em PCs com SSD a diferença é pequena. Às vezes é culpado por uso de disco alto logo após ligar o PC.",
+      "evidence": "Sem benchmarks rigorosos mostrando ganho ao desativar em SSD; relatos de alívio de uso de disco em HDD durante o boot são anedóticos. Desativar também afeta a compressão de memória/prefetch. Evidência insuficiente → manter padrão.",
+      "references": [
+        "https://www.tenforums.com/tutorials/99821-enable-disable-superfetch-windows.html",
+        "https://forums.tomshardware.com/threads/disable-superfetch-sysmain-with-ssd.3690306/?view=votes",
+        "https://www.thewindowsclub.com/disable-superfetch-prefetch-ssd"
+      ],
+      "grade": "C",
+      "confidence": "Low",
+      "risk": "Low",
+      "impact": "Unknown",
+      "sideEffects": "Programas usados com frequência podem abrir mais devagar; compressão de memória pode deixar de operar.",
+      "restart": "Reboot",
+      "dependsOn": [],
+      "conflictsWith": [],
+      "compatibility": { "minBuild": 17763 },
+      "options": [
+        {
+          "key": "default",
+          "label": "Automático (padrão)",
+          "targets": [ { "type": "service", "serviceName": "SysMain", "startMode": "Automatic" } ]
+        },
+        {
+          "key": "manual",
+          "label": "Manual",
+          "targets": [ { "type": "service", "serviceName": "SysMain", "startMode": "Manual" } ]
+        },
+        {
+          "key": "disabled",
+          "label": "Desativado",
+          "targets": [ { "type": "service", "serviceName": "SysMain", "startMode": "Disabled" } ]
+        }
+      ],
+      "defaultOption": "default",
+      "recommendedOption": null,
+      "experimental": false,
+      "privacy": false,
+      "tags": ["memory", "service", "superfetch", "hdd"],
+      "benchmarkProcedure": "Medir tempo de boot e uso de disco nos primeiros 5 min (Monitor de Recursos) e abertura a frio de aplicativos frequentes, 3 boots por estado.",
+      "origin": "Guias de otimização desde o Windows Vista (Superfetch)."
+    }
+  ]
+}

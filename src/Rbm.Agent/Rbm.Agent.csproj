@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Processo auxiliar privilegiado. Só é iniciado sob demanda pela UI (UAC). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Rbm.Agent</RootNamespace>
+    <AssemblyName>RBM.Agent</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rbm.Core\Rbm.Core.csproj" />
+    <ProjectReference Include="../Rbm.Processes/Rbm.Processes.csproj" />
+    <ProjectReference Include="../Rbm.Latency/Rbm.Latency.csproj" />
+    <ProjectReference Include="..\Rbm.Security\Rbm.Security.csproj" />
+    <ProjectReference Include="..\Rbm.Optimization\Rbm.Optimization.csproj" />
+    <ProjectReference Include="..\Rbm.Restore\Rbm.Restore.csproj" />
+    <ProjectReference Include="..\Rbm.Drivers\Rbm.Drivers.csproj" />
+    <ProjectReference Include="..\Rbm.Diagnostics\Rbm.Diagnostics.csproj" />
+    <ProjectReference Include="..\Rbm.Gaming\Rbm.Gaming.csproj" />
+    <ProjectReference Include="..\Rbm.Hardware\Rbm.Hardware.csproj" />
+    <ProjectReference Include="../Rbm.Network/Rbm.Network.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+</Project>

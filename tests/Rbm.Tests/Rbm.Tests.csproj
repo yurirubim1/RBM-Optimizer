@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Rbm.Tests</RootNamespace>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Rbm.Core\Rbm.Core.csproj" />
+    <ProjectReference Include="../../src/Rbm.Processes/Rbm.Processes.csproj" />
+    <ProjectReference Include="../../src/Rbm.Latency/Rbm.Latency.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Data\Rbm.Data.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Security\Rbm.Security.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Hardware\Rbm.Hardware.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Monitoring\Rbm.Monitoring.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Diagnostics\Rbm.Diagnostics.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Optimization\Rbm.Optimization.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Restore\Rbm.Restore.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Drivers\Rbm.Drivers.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Benchmarks\Rbm.Benchmarks.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Gaming\Rbm.Gaming.csproj" />
+    <ProjectReference Include="..\..\src\Rbm.Network\Rbm.Network.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+</Project>
